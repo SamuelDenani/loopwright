@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Fast, context-free checks before every commit. This hook is a shortcut for
+# the feedback the CI quality gate would give minutes later — the gate remains
+# the authority (and catches --no-verify commits anyway).
+# Wired by scripts/setup.sh via: git config core.hooksPath .githooks
+set -euo pipefail
+
+fail() { echo "pre-commit: $1" >&2; exit 1; }
+
+# --- gated shortcuts in staged additions -------------------------------------
+# Each of these blocks the PR in CI; rejecting them here saves the round-trip.
+added=$(git diff --cached -U0 -- '*.ts' '*.tsx' | grep '^+[^+]' || true)
+if [ -n "$added" ]; then
+  declare -a patterns=(
+    '\.only *\('            'a focused test (.only)'
+    '\.skip *\('            'a skipped test (.skip)'
+    '@ts-ignore'            '@ts-ignore'
+    '@ts-expect-error'      '@ts-expect-error'
+    '\bas any\b'            'an "as any" cast'
+    'eslint-disable'        'an inline eslint-disable'
+    'v8 ignore'             'a coverage-ignore hint'
+    'istanbul ignore'       'a coverage-ignore hint'
+  )
+  for ((i = 0; i < ${#patterns[@]}; i += 2)); do
+    if match=$(grep -En "${patterns[i]}" <<<"$added" | head -1); then
+      fail "staged change adds ${patterns[i+1]} — the quality gate blocks this in CI. Fix the cause instead.
+  ${match}"
+    fi
+  done
+fi
+
+# --- baseline guard ----------------------------------------------------------
+if git diff --cached --name-only | grep -qx 'quality-baseline.json'; then
+  [ -n "${ALLOW_BASELINE:-}" ] || fail "commit touches quality-baseline.json. The baseline is a ratchet, not a knob.
+  If the metrics genuinely improved (or this is the initial baseline), commit with:
+  ALLOW_BASELINE=1 git commit ..."
+fi
+
+# --- typecheck + lint (staged files only for eslint) -------------------------
+npm run -s typecheck || fail "typecheck failed"
+
+staged_ts=$(git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' | grep -v '\.d\.ts$' || true)
+if [ -n "$staged_ts" ]; then
+  # shellcheck disable=SC2086
+  npx eslint $staged_ts || fail "eslint failed on staged files"
+fi

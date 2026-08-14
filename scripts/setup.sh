@@ -47,6 +47,10 @@ gh api -X PUT "repos/${REPO}/branches/main/protection" \
 JSON
 echo "protection ok:  main requires the Quality gate check"
 
+# --- pre-commit hook ---------------------------------------------------------
+git config core.hooksPath .githooks
+echo "hooks ok:       core.hooksPath -> .githooks (fast pre-commit checks)"
+
 # --- initial baseline --------------------------------------------------------
 if [ -f quality-baseline.json ]; then
   echo "baseline ok:    quality-baseline.json exists"

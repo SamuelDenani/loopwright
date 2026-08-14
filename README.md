@@ -49,7 +49,8 @@ lands, and fill in the `TODO(template)` markers in `CLAUDE.md`.
 | Skills (grill-rfc / execute-issue / babysit-pr) | `.claude/skills/` |
 | Gate engine | `scripts/quality-gate.mjs`, `quality-gate.config.json` |
 | CI | `.github/workflows/` |
-| GitHub state (labels, protection, baseline) | `scripts/setup.sh` |
+| Pre-commit fast checks | `.githooks/pre-commit` |
+| GitHub state (labels, protection, baseline, hooks) | `scripts/setup.sh` |
 
 ## Requirements
 
