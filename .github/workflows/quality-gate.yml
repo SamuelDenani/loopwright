@@ -1,0 +1,89 @@
+name: Quality gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One run per PR. A new push supersedes the previous run, which matters when an
+# agent is pushing fixes in a tight loop.
+concurrency:
+  group: quality-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  quality-gate:
+    name: Quality gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history so the gate can resolve the baseline commit.
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Every collector below writes a report and exits 0 on purpose. The gate
+      # is the only step allowed to fail the build, so a failing test still
+      # produces a full report instead of aborting the run half-way.
+      - name: Typecheck
+        run: npm run typecheck:ci
+
+      - name: Lint
+        run: npm run lint:ci
+
+      - name: Tests and coverage
+        run: npm run test:coverage:ci
+
+      - name: Dependency audit
+        run: npm run audit:ci
+
+      - name: Duplication
+        run: npm run duplication:ci
+
+      - name: Quality gate
+        id: gate
+        continue-on-error: true
+        run: npm run quality:gate
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            reports/
+            coverage/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Sticky PR comment
+        if: always() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node scripts/sticky-comment.mjs reports/quality-gate.md
+
+      # Fails last, so the report and the comment are always published first.
+      - name: Enforce verdict
+        if: steps.gate.outputs.verdict == 'block' || steps.gate.outcome == 'failure'
+        run: |
+          echo "Quality gate blocked this PR: ${{ steps.gate.outputs.blocking }} blocker(s)."
+          echo "See the PR comment, the step summary, or the quality-reports artifact."
+          exit 1

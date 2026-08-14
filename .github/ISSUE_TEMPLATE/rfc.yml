@@ -1,0 +1,43 @@
+name: "RFC"
+about: "Top-level RFC for discussion with coding agents"
+title: "RFC: "
+labels: ["rfc"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: "Summary"
+      description: "One-paragraph summary of the change."
+      placeholder: "Short summary..."
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: "Motivation"
+      description: "Why are we making this change?"
+      required: true
+  - type: textarea
+    id: goals
+    attributes:
+      label: "Goals / Non-goals"
+      description: "List goals and non-goals"
+  - type: textarea
+    id: approach
+    attributes:
+      label: "Proposed approach"
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternatives considered"
+  - type: textarea
+    id: risks
+    attributes:
+      label: "Risks"
+  - type: textarea
+    id: task_breakdown
+    attributes:
+      label: "Task breakdown (link sub-issues)"
+  - type: textarea
+    id: open_questions
+    attributes:
+      label: "Open questions"

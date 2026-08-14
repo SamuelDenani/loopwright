@@ -1,0 +1,37 @@
+name: "Task"
+about: "Narrow implementation task linked to an RFC"
+title: "Task: "
+labels: ["task"]
+body:
+  - type: input
+    id: parent_rfc
+    attributes:
+      label: "Parent RFC"
+      description: "Number or link to parent RFC issue (e.g. #1)"
+      placeholder: "#1"
+      required: true
+  - type: textarea
+    id: intent
+    attributes:
+      label: "Intent"
+      description: "What should be true after this task completes"
+      required: true
+  - type: textarea
+    id: path
+    attributes:
+      label: "Path"
+      description: "Suggested steps the agent should take"
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "Acceptance criteria"
+      description: "What must be true to consider this task done"
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: "Out of scope"
+  - type: textarea
+    id: verify
+    attributes:
+      label: "How to verify"
