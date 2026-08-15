@@ -125,6 +125,13 @@ function measureFunction(fn, sourceFile) {
   };
 }
 
+function scriptKindFor(path) {
+  if (path.endsWith('.tsx')) return ts.ScriptKind.TSX;
+  if (path.endsWith('.jsx')) return ts.ScriptKind.JSX;
+  if (path.endsWith('.mjs') || path.endsWith('.cjs') || path.endsWith('.js')) return ts.ScriptKind.JS;
+  return ts.ScriptKind.TS;
+}
+
 function countCodeLines(text) {
   let inBlockComment = false;
   let count = 0;
@@ -194,7 +201,7 @@ function testBodyHasAssertion(call, sourceFile) {
 function analyzeFile(absolutePath, rootDir) {
   const filePath = relative(rootDir, absolutePath).split('\\').join('/');
   const text = readFileSync(absolutePath, 'utf8');
-  const sourceFile = ts.createSourceFile(absolutePath, text, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS);
+  const sourceFile = ts.createSourceFile(absolutePath, text, ts.ScriptTarget.ES2022, true, scriptKindFor(absolutePath));
 
   const functions = [];
   const findings = {
