@@ -62,6 +62,25 @@ describe('biome adapter', () => {
     expect(report.messages).toHaveLength(3);
     expect(report.messages.find((m) => m.file === 'unknown')).toBeTruthy();
   });
+
+  it('returns null for unparseable JSON', () => {
+    expect(parseBiomeJson('not json')).toBeNull();
+  });
+
+  it('defaults every optional field on a minimal report with no summary/diagnostics', () => {
+    expect(parseBiomeJson('{}')).toEqual({ ok: true, errors: 0, warnings: 0, messages: [] });
+  });
+});
+
+describe('eslint adapter — parse edge cases', () => {
+  it('returns null for unparseable JSON', () => {
+    expect(parseEslintJson('not json')).toBeNull();
+  });
+
+  it('defaults every optional field on a minimal per-file entry', () => {
+    const report = parseEslintJson(JSON.stringify([{}]));
+    expect(report).toEqual({ ok: true, errors: 0, warnings: 0, messages: [] });
+  });
 });
 
 describe('jscpd adapter', () => {

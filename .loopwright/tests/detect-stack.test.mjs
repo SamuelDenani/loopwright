@@ -50,4 +50,31 @@ describe('detectStack', () => {
     expect(result.sources.roots).toEqual(['src']);
     expect(result.notices.join(' ')).toMatch(/no conventional source directory/);
   });
+
+  it('leaves audit unconfigured for a yarn.lock repo — no adapter covers it', () => {
+    const dir = host({}, ['yarn.lock'], ['src']);
+    const result = detectStack(dir);
+    expect(result.collectors.audit.adapter).toBe('unconfigured');
+    expect(result.notices.join(' ')).toMatch(/found yarn\.lock/);
+  });
+
+  it('leaves audit unconfigured for a pnpm-lock.yaml repo — no adapter covers it', () => {
+    const dir = host({}, ['pnpm-lock.yaml'], ['src']);
+    const result = detectStack(dir);
+    expect(result.collectors.audit.adapter).toBe('unconfigured');
+    expect(result.notices.join(' ')).toMatch(/found pnpm-lock\.yaml/);
+  });
+
+  it('detects an eslint config file even with no eslint dependency listed', () => {
+    const dir = host({}, ['eslint.config.js'], ['src']);
+    const result = detectStack(dir);
+    expect(result.collectors.lint.adapter).toBe('eslint');
+  });
+
+  it('leaves typecheck unconfigured for a typescript dependency with no tsconfig.json', () => {
+    const dir = host({ devDependencies: { typescript: '^5' } }, [], ['src']);
+    const result = detectStack(dir);
+    expect(result.collectors.typecheck.adapter).toBe('unconfigured');
+    expect(result.notices.join(' ')).toMatch(/no typescript \+ tsconfig\.json/);
+  });
 });

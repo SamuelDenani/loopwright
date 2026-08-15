@@ -34,7 +34,7 @@ export function resolveCollector(collectorName, entry, hostRoot) {
   return { adapter, command: entry.command ?? adapter.defaultCommand, cwd: resolve(hostRoot, entry.cwd ?? '.') };
 }
 
-function main() {
+export function main() {
   const target = process.argv[2];
   const config = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
   const names = target === '--all' ? Object.keys(config.collectors) : [target];

@@ -1,5 +1,5 @@
 {
-  "sources": { "roots": [".loopwright/scripts", ".loopwright/tests"], "extensions": [".mjs"], "ignore": [] },
+  "sources": { "roots": [".loopwright/scripts", ".loopwright/tests"], "extensions": [".mjs"], "ignore": ["**/fixtures/**"] },
 
   "collectors": {
     "typecheck":   { "adapter": "unconfigured" },

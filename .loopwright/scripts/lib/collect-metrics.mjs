@@ -40,13 +40,28 @@ function toPosix(path) {
   return path.split('\\').join('/');
 }
 
+/**
+ * Matches a source-file path against one `sources.ignore` glob. Only the two
+ * shapes the config actually uses are supported: a directory glob
+ * (`**\/name/**`, matched as a `/name/` path segment anywhere) and a leading
+ * `**\/` file-suffix glob (`**\/name.ext`, matched with `endsWith`).
+ */
+function ignoreMatches(file, pattern) {
+  const path = toPosix(file);
+  if (pattern.endsWith('/**')) {
+    const dir = pattern.slice(0, -3).replace(/^\*\*\//, '');
+    return path.includes(`/${dir}/`);
+  }
+  return path.endsWith(pattern.replace(/^\*\*\//, ''));
+}
+
 export function listSourceFiles(root, sources) {
   const files = [];
   for (const dir of sources.roots) {
     walk(resolve(root, dir), sources.extensions, files);
   }
-  const ignore = (sources.ignore ?? []).map((pattern) => pattern.replace('**/', ''));
-  return files.filter((file) => !ignore.some((suffix) => toPosix(file).endsWith(suffix))).sort();
+  const patterns = sources.ignore ?? [];
+  return files.filter((file) => !patterns.some((pattern) => ignoreMatches(file, pattern))).sort();
 }
 
 function pct(entry) {

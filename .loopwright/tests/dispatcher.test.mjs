@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { ADAPTERS } from '../scripts/adapters/index.mjs';
 import { REPORT_FILES, writeUnconfigured, resolveCollector } from '../scripts/run-report.mjs';
 
@@ -25,6 +25,12 @@ describe('resolveCollector', () => {
     expect(resolved.command).toBe('npx vitest run');
     expect(resolved.cwd).toBe(join('/host', '.loopwright'));
   });
+  it('falls back to the adapter default command and cwd "." when the config entry gives none', () => {
+    const resolved = resolveCollector('tests', { adapter: 'vitest' }, '/host');
+    expect(resolved.command).toBe(resolved.adapter.defaultCommand);
+    expect(resolved.cwd).toBe(resolve('/host'));
+  });
+
   it('unknown adapter names are an explicit error', () => {
     expect(() => resolveCollector('lint', { adapter: 'nope' }, '/host')).toThrow(/unknown adapter/);
   });
