@@ -35,7 +35,7 @@ a way out:
 - Never add `@ts-ignore`, `@ts-expect-error`, `as any`, inline
   `eslint-disable`, or coverage-ignore comments.
 - Never swallow an error in an empty `catch`.
-- Never touch `quality-baseline.json` or `quality-gate.config.json`.
+- Never touch `.loopwright/baseline.json` or `.loopwright/config.json`.
 - Money is integer cents (`src/utils/money.ts`). Never floats.
 - Stay inside your assigned step. If the step turns out to be wrong or
   impossible as written, stop and report — do not improvise a different design.

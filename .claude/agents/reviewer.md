@@ -30,7 +30,7 @@ implement.
    regressed. A test that passes with the implementation deleted is a finding.
 5. **Gate-dodging**: any `.only`/`.skip`, assertion-free tests, `as any`,
    `@ts-ignore`, inline `eslint-disable`, empty `catch`, coverage-ignore
-   comments, or edits to `quality-baseline.json` — these block the PR in CI,
+   comments, or edits to `.loopwright/baseline.json` — these block the PR in CI,
    so catching them here saves a round-trip.
 6. **Conventions**: pure functions over plain data, tests mirroring `src/`
    layout, comment density matching the surrounding code.

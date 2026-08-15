@@ -1,38 +1,45 @@
-# <project-name>
+# loopwright
 
-<!-- TODO(template): one paragraph on what this project is. -->
+Built from the loopwright project — this repo IS the product: the engine
+lives in `.loopwright/scripts/`, its tests in `.loopwright/tests/`
+(`cd .loopwright && npx vitest run` runs them).
 
-Built from the loopwright template: RFC-driven issues, an agentic execution
-loop, and a CI quality gate. See `docs/quality-gate.md` for how the gate
-works, and `docs/loop-harness.md` for how work flows from an RFC issue to a
+<!-- loopwright:start -->
+## loopwright
+
+This repo has the loopwright layer vendored under `.loopwright/`: RFC-driven
+issues, an agentic execution loop, and a CI quality gate. See
+`docs/loopwright/quality-gate.md` for how the gate works, and
+`docs/loopwright/loop-harness.md` for how work flows from an RFC issue to a
 merged PR (the `/grill-rfc`, `/execute-issue`, and `/babysit-pr` skills).
 
-## Commands
+### Commands
 
 ```bash
-npm run typecheck   # tsc --noEmit
-npm run lint        # eslint
-npm test            # vitest run
-npm run quality     # collect all reports, then run the gate (what CI runs)
+node .loopwright/scripts/run-report.mjs --all   # collect all reports
+node .loopwright/scripts/quality-gate.mjs       # run the gate (what CI runs)
+node .loopwright/scripts/quality-gate.mjs --update-baseline
 ```
 
-## Working on a PR
+### Working on a PR
 
-The `Quality gate` workflow blocks the merge. `scripts/quality-gate.mjs` is the
-only step that can fail the build; every other step writes a report and exits 0.
+The `Quality gate` workflow blocks the merge. `.loopwright/scripts/quality-gate.mjs`
+is the only step that can fail the build; every other step writes a report and
+exits 0.
 
 When the gate is red:
 
-1. Read `reports/quality-gate.json` — it has the verdict, every metric with its
-   baseline and current value, and `evidence` with `file:line` for each finding.
-   In CI the same content is in the PR comment, the step summary, and the
-   `quality-reports-*` artifact.
-2. Fix the blockers listed under `What to do`. Re-run `npm run quality` to
-   confirm before pushing.
+1. Read `.loopwright/reports/quality-gate.json` — it has the verdict, every
+   metric with its baseline and current value, and `evidence` with `file:line`
+   for each finding. In CI the same content is in the PR comment, the step
+   summary, and the `quality-reports-*` artifact.
+2. Fix the blockers listed under `What to do`. Re-run
+   `node .loopwright/scripts/run-report.mjs --all && node .loopwright/scripts/quality-gate.mjs`
+   to confirm before pushing.
 3. Warnings do not block. Fix them if they are cheap; do not let them distract
    from the blockers.
 
-## Do not do these
+### Do not do these
 
 The gate exists because these are the shortcuts that turn a build green without
 making the code correct. Each one is itself gated and will block the PR:
@@ -43,7 +50,7 @@ making the code correct. Each one is itself gated and will block the PR:
 - adding `@ts-ignore`, `@ts-expect-error` or `as any` to silence a type error
 - adding an inline `eslint-disable` to silence a rule
 - swallowing an error in an empty `catch`
-- regenerating `quality-baseline.json` to make a regression disappear
+- regenerating `baseline.json` to make a regression disappear
 - adding an `audit.ignore` entry for an advisory that does have a fix available
 
 Dependency advisories have no dev/prod exemption — a critical blocks wherever
@@ -53,11 +60,4 @@ and explain it in the PR description.
 
 The baseline is a ratchet, not a knob. Only regenerate it when the metrics
 genuinely improved, and say so explicitly in the PR description.
-
-## Conventions
-
-<!-- TODO(template): replace with this project's real conventions. -->
-
-- Source modules are pure functions over plain data; state lives in the caller.
-- Tests live in `tests/`, mirroring the `src/` layout, and assert real values
-  rather than snapshots.
+<!-- loopwright:end -->

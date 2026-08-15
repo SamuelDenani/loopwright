@@ -3,8 +3,8 @@
 *A wright is a maker — a shipwright builds ships, a playwright builds plays.
 A loopwright builds loops.*
 
-Template for AI-assisted TypeScript projects. Repos born from it come with
-the full loop pre-wired:
+A vendorable quality layer for AI-assisted TypeScript projects. Drop it into
+any repo and it wires in the full loop:
 
 - **RFC-driven issues** — top-level issues are RFCs, refined by interrogation
   (`/grill-rfc`) and broken into task sub-issues with native parent/blocked-by
@@ -20,14 +20,23 @@ the full loop pre-wired:
 The gate is the only source of truth for "done"; merging is always the
 human's decision.
 
+This repository is itself built on loopwright — the engine that ships to
+other repos lives here under `.loopwright/scripts/`, tested by
+`.loopwright/tests/` (see `CLAUDE.md`).
+
 ## Quickstart
 
+Vendor the layer into an existing repo:
+
 ```bash
-gh repo create my-project --template <owner>/loopwright --private --clone
-cd my-project
-./scripts/setup.sh        # labels, branch protection, initial baseline
+curl -fsSL https://raw.githubusercontent.com/SamuelDenani/loopwright/main/install.sh | bash
+./setup.sh        # gh auth required: labels, branch protection, initial baseline
 gh secret set CLAUDE_CODE_OAUTH_TOKEN   # if setup reported it missing
 ```
+
+`install.sh` is idempotent: re-running it re-syncs the engine under
+`.loopwright/scripts/` and never overwrites your config, baseline, or any
+integration file you already have.
 
 Then, in Claude Code:
 
@@ -36,21 +45,19 @@ Then, in Claude Code:
 3. `/execute-issue <n>` — hand it a task (or the whole RFC) and watch the
    task list.
 
-Replace `src/seed.ts` + `tests/seed.test.ts` when your first real module
-lands, and fill in the `TODO(template)` markers in `CLAUDE.md`.
-
 ## How it works
 
 | Piece | Where |
 |---|---|
-| Flow overview | `docs/loop-harness.md` |
-| Gate design | `docs/quality-gate.md` |
+| Flow overview | `docs/loopwright/loop-harness.md` |
+| Gate design | `docs/loopwright/quality-gate.md` |
 | Agents (planner / coder / reviewer) | `.claude/agents/` |
 | Skills (grill-rfc / execute-issue / babysit-pr) | `.claude/skills/` |
-| Gate engine | `scripts/quality-gate.mjs`, `quality-gate.config.json` |
+| Gate engine | `.loopwright/scripts/quality-gate.mjs`, `.loopwright/config.json` |
+| Installer | `install.sh` |
 | CI | `.github/workflows/` |
 | Pre-commit fast checks | `.githooks/pre-commit` |
-| GitHub state (labels, protection, baseline, hooks) | `scripts/setup.sh` |
+| GitHub state (labels, protection, baseline, hooks) | `setup.sh` |
 
 ## Requirements
 

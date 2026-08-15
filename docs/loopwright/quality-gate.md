@@ -6,38 +6,46 @@ detail to fix it and push again without a human in the loop.
 
 ## The one rule
 
-**`scripts/quality-gate.mjs` is the only step allowed to fail the build.**
+**`.loopwright/scripts/quality-gate.mjs` is the only step allowed to fail the build.**
 
 Everything upstream — `tsc`, `eslint`, `vitest`, `npm audit`, `jscpd` — runs
-non-blocking and just writes reports to `reports/`. That way a failing test
-still produces a complete picture instead of aborting the workflow half-way,
-and the agent always gets one authoritative verdict to work against.
+non-blocking and just writes reports to `.loopwright/reports/`. That way a
+failing test still produces a complete picture instead of aborting the
+workflow half-way, and the agent always gets one authoritative verdict to
+work against.
 
 ```
 npm ci
   └─ typecheck:ci ──┐
      lint:ci ───────┤
-     test:coverage:ci ──┤ all exit 0, all write reports/
+     test:coverage:ci ──┤ all exit 0, all write .loopwright/reports/
      audit:ci ──────┤
      duplication:ci ┘
-        └─ quality:gate ──► reports/quality-gate.{json,md} + exit 0|1
+        └─ quality-gate.mjs ──► .loopwright/reports/quality-gate.{json,md} + exit 0|1
              └─ sticky comment + step summary + artifacts
 ```
 
 ## Running it locally
 
 ```bash
-npm run quality          # collect everything, then gate (same as CI)
-npm run quality:collect  # just refresh the reports
-npm run quality:gate     # just re-score the existing reports (fast)
-npm run quality:baseline # record the current state as the new baseline
+node .loopwright/scripts/run-report.mjs --all && node .loopwright/scripts/quality-gate.mjs
+# collect everything, then gate (same as CI)
+
+node .loopwright/scripts/run-report.mjs --all
+# just refresh the reports
+
+node .loopwright/scripts/quality-gate.mjs
+# just re-score the existing reports (fast)
+
+node .loopwright/scripts/quality-gate.mjs --update-baseline
+# record the current state as the new baseline
 ```
 
 Exit codes: `0` pass (warnings allowed), `1` blocked, `2` could not run.
 
 ## Baselines
 
-`quality-baseline.json` is the ratchet. It is committed, and every PR is scored
+`.loopwright/baseline.json` is the ratchet. It is committed, and every PR is scored
 against it: the question is never "is this code good" but "does this PR make it
 worse". That is what makes the gate adoptable on an existing codebase — you do
 not have to fix the past to start protecting the present.
@@ -52,8 +60,9 @@ It records three things:
 Regenerate it deliberately, never to make a red build green:
 
 ```bash
-npm run quality:collect && npm run quality:baseline
-git add quality-baseline.json && git commit -m "chore: ratchet quality baseline"
+node .loopwright/scripts/run-report.mjs --all
+node .loopwright/scripts/quality-gate.mjs --update-baseline
+git add .loopwright/baseline.json && git commit -m "chore: ratchet quality baseline"
 ```
 
 The gate refuses to write a baseline from incomplete reports, so you cannot
@@ -65,7 +74,7 @@ Two independent judgements, merged into the worst of the two.
 
 ### 1. Metric ratchet
 
-Each metric in `quality-gate.config.json` declares:
+Each metric in `.loopwright/config.json` declares:
 
 | field          | meaning                                                        |
 | -------------- | -------------------------------------------------------------- |
@@ -105,7 +114,7 @@ Critical blocks; high warns. The two severities stay distinguishable that way �
 if high blocked as well, the severity would carry no information about how
 urgently the PR has to stop.
 
-The escape valve is `audit.ignore` in `quality-gate.config.json`, because
+The escape valve is `audit.ignore` in `.loopwright/config.json`, because
 otherwise an advisory with no upstream fix deadlocks the PR forever — and an
 agent will keep retrying a fix that does not exist. Every entry must carry an
 `expires` date:
@@ -135,8 +144,9 @@ ratchet.
 **Duplication** — `jscpd` percentage, floor of 5% and a 0.2pp ratchet.
 
 **Shape** — cyclomatic complexity, function length, nesting depth, parameter
-count, file length. Computed by `scripts/lib/analyze-source.mjs` on the
-TypeScript compiler API, so it does not depend on parsing ESLint messages.
+count, file length. Computed by `.loopwright/scripts/lib/analyze-source.mjs`
+on the TypeScript compiler API, so it does not depend on parsing ESLint
+messages.
 
 **Integrity** — the part that exists specifically because an agent is writing
 the code. These are the tells that a green build was bought rather than earned:
@@ -157,7 +167,7 @@ existing ones are tolerated and new ones are not.
 
 ## Tuning
 
-Everything lives in `quality-gate.config.json`. Common adjustments:
+Everything lives in `.loopwright/config.json`. Common adjustments:
 
 - **Too noisy on an existing codebase** — take a baseline first; that alone
   silences all pre-existing debt.
@@ -166,6 +176,8 @@ Everything lives in `quality-gate.config.json`. Common adjustments:
 - **A metric does not apply** — delete its entry; the gate only scores what is
   configured.
 
-Adding a metric means: collect the number in `scripts/lib/collect-metrics.mjs`,
-add a policy entry to the config, and optionally add a remediation line in
-`scripts/lib/report.mjs` so the PR comment tells the agent what to do about it.
+Adding a metric means: collect the number in
+`.loopwright/scripts/lib/collect-metrics.mjs`, add a policy entry to the
+config, and optionally add a remediation line in
+`.loopwright/scripts/lib/report.mjs` so the PR comment tells the agent what
+to do about it.

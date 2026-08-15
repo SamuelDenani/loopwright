@@ -1,8 +1,8 @@
 # Loop harness
 
 How work flows through this repo when coding agents execute it. The quality
-gate (`docs/quality-gate.md`) is the enforcement half; this is the execution
-half.
+gate (`docs/loopwright/quality-gate.md`) is the enforcement half; this is the
+execution half.
 
 ## Flow
 
@@ -51,7 +51,7 @@ Ready PR, gate green, reviews addressed → human merges
   (cheap, mechanical signal for the babysitting loop); the Claude review
   workflow skips drafts and runs on `ready_for_review`.
 - **The gate is the only source of truth for "done".** No agent may override
-  a red verdict, regenerate `quality-baseline.json`, or take any of the
+  a red verdict, regenerate `.loopwright/baseline.json`, or take any of the
   gated shortcuts listed in `CLAUDE.md`.
 - **State lives in artifacts, not sessions**: the refined RFC and its comment
   trail on the issue, the committed spec in `docs/specs/`, per-step commits,
@@ -66,7 +66,7 @@ Ready PR, gate green, reviews addressed → human merges
 | Agents (planner / coder / reviewer) | `.claude/agents/` |
 | Skills (grill-rfc / execute-issue / babysit-pr) | `.claude/skills/` |
 | Specs | `docs/specs/issue-<N>.md` |
-| Quality gate | `scripts/quality-gate.mjs`, `docs/quality-gate.md` |
+| Quality gate | `.loopwright/scripts/quality-gate.mjs`, `docs/loopwright/quality-gate.md` |
 | CI | `.github/workflows/quality-gate.yml`, `claude-code-review.yml` |
 
 Issue relationships use GitHub's native fields — no custom project fields:
