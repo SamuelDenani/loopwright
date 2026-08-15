@@ -27,7 +27,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Full history so the gate can resolve the baseline commit.
           fetch-depth: 0
 
       - name: Set up Node
@@ -35,41 +34,41 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            .loopwright/package-lock.json
 
-      - name: Install dependencies
+      - name: Install host dependencies
         run: npm ci
 
-      # Every collector below writes a report and exits 0 on purpose. The gate
-      # is the only step allowed to fail the build, so a failing test still
-      # produces a full report instead of aborting the run half-way.
-      - name: Typecheck
-        run: npm run typecheck:ci
+      - name: Install engine dependencies
+        run: npm ci
+        working-directory: .loopwright
 
-      - name: Lint
-        run: npm run lint:ci
+      - name: Engine unit tests (loopwright repo only guard is unnecessary — vendored copies ship tests too)
+        if: github.repository == 'SamuelDenani/loopwright'
+        run: npx vitest run
+        working-directory: .loopwright
 
-      - name: Tests and coverage
-        run: npm run test:coverage:ci
-
-      - name: Dependency audit
-        run: npm run audit:ci
-
-      - name: Duplication
-        run: npm run duplication:ci
+      # Collectors write reports and exit 0; the gate is the only failing step.
+      - name: Collect reports
+        run: node .loopwright/scripts/run-report.mjs --all
 
       - name: Quality gate
         id: gate
         continue-on-error: true
-        run: npm run quality:gate
+        run: node .loopwright/scripts/quality-gate.mjs
+
+      - name: Installer smoke test
+        if: github.repository == 'SamuelDenani/loopwright'
+        run: bash .loopwright/tests/installer.test.sh
 
       - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: quality-reports-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            reports/
-            coverage/
+          path: .loopwright/reports/
           retention-days: 14
           if-no-files-found: warn
 
@@ -78,12 +77,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: node scripts/sticky-comment.mjs reports/quality-gate.md
+        run: node .loopwright/scripts/sticky-comment.mjs .loopwright/reports/quality-gate.md
 
-      # Fails last, so the report and the comment are always published first.
       - name: Enforce verdict
         if: steps.gate.outputs.verdict == 'block' || steps.gate.outcome == 'failure'
         run: |
           echo "Quality gate blocked this PR: ${{ steps.gate.outputs.blocking }} blocker(s)."
-          echo "See the PR comment, the step summary, or the quality-reports artifact."
           exit 1
