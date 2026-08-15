@@ -27,10 +27,22 @@ describe('eslint adapter', () => {
 });
 
 describe('vitest adapter', () => {
+  const raw = JSON.parse(fixture('vitest-results.json'));
+
   it('summarizes counts and failure messages', () => {
-    const summary = summarizeTestResults(JSON.parse(fixture('vitest-results.json')), false);
+    const summary = summarizeTestResults(raw, false);
     expect(summary).toMatchObject({ ok: false, total: 3, passed: 2, failed: 1, suitesFailed: 1 });
     expect(summary.failures[0].message.length).toBeGreaterThan(0);
+  });
+
+  it('leaves failure file paths untouched when no root is given', () => {
+    const summary = summarizeTestResults(raw, false);
+    expect(summary.failures[0].file).toBe('/repo/tests/example.test.mjs');
+  });
+
+  it('relativizes absolute failure file paths against an explicit root', () => {
+    const summary = summarizeTestResults(raw, false, '/repo');
+    expect(summary.failures[0].file).toBe('tests/example.test.mjs');
   });
 });
 

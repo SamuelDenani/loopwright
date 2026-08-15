@@ -6,7 +6,7 @@
  * summarises it into test-summary.json.
  */
 import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { isAbsolute, relative, resolve } from 'node:path';
 import { runShell, writeReport } from '../lib/shell.mjs';
 
 const TOOL_MISSING = /not found|command not found|ERR_MODULE_NOT_FOUND|npm error/i;
@@ -20,10 +20,29 @@ function readJsonIfPresent(target) {
   }
 }
 
-export function extractFailures(raw) {
+function toPosix(path) {
+  return path.split('\\').join('/');
+}
+
+/**
+ * vitest reports `testResults[].name` as an absolute path. When `root` is
+ * given (ctx.hostRoot, threaded through from `collect`), relativize it so
+ * `failures[].file` is repo-relative like the eslint/tsc adapters' evidence
+ * — otherwise the gate's PR-comment evidence mixes absolute and relative
+ * paths depending on which collector produced it. Left as-is when `root` is
+ * omitted (e.g. direct unit tests of the pure summarizer) or the name isn't
+ * absolute to begin with.
+ */
+function relativizeName(name, root) {
+  if (!name) return 'unknown';
+  if (!root || !isAbsolute(name)) return name;
+  return toPosix(relative(root, name));
+}
+
+export function extractFailures(raw, root) {
   const failures = [];
   for (const file of raw?.testResults ?? []) {
-    const name = file.name ?? 'unknown';
+    const name = relativizeName(file.name, root);
     for (const assertion of file.assertionResults ?? []) {
       if (assertion.status !== 'failed') continue;
       const messages = assertion.failureMessages ?? [];
@@ -40,10 +59,11 @@ export function extractFailures(raw) {
 /**
  * Summarises a parsed vitest JSON reporter payload (`raw`, or `null` when no
  * JSON was produced) plus the process exit outcome (`ok`) into the
- * test-summary.json shape.
+ * test-summary.json shape. `root` is optional and, when given, relativizes
+ * `failures[].file` against it (see relativizeName above).
  */
-export function summarizeTestResults(raw, ok) {
-  const failures = extractFailures(raw);
+export function summarizeTestResults(raw, ok, root) {
+  const failures = extractFailures(raw, root);
   const count = (key, fallback = 0) => raw?.[key] ?? fallback;
   return {
     ok,
@@ -63,7 +83,7 @@ export default {
   defaultCommand:
     'npx vitest run --coverage --coverage.reporter=json-summary --coverage.reportsDirectory=.loopwright/reports/coverage --reporter=default --reporter=json --outputFile.json=.loopwright/reports/test-results.json',
   collect(ctx) {
-    const { command, cwd, reportsDir } = ctx;
+    const { command, cwd, reportsDir, hostRoot } = ctx;
     const result = runShell(command, cwd);
     const raw = readJsonIfPresent(resolve(reportsDir, 'test-results.json'));
 
@@ -74,7 +94,7 @@ export default {
       return;
     }
 
-    const summary = summarizeTestResults(raw, result.status === 0);
+    const summary = summarizeTestResults(raw, result.status === 0, hostRoot);
     writeReport(reportsDir, 'test-summary.json', summary);
     console.log(`tests: exit ${result.status}, ${summary.failures.length} failing assertion(s)`);
   },

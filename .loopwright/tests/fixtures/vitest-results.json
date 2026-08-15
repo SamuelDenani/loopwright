@@ -7,7 +7,7 @@
   "numFailedTestSuites": 1,
   "testResults": [
     {
-      "name": "tests/example.test.mjs",
+      "name": "/repo/tests/example.test.mjs",
       "assertionResults": [
         { "status": "passed", "fullName": "does a thing", "title": "does a thing" },
         { "status": "passed", "fullName": "does another thing", "title": "does another thing" },
