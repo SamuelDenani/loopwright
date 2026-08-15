@@ -8,7 +8,7 @@
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { runShell, writeReport, REPORT_FILES } from '../lib/shell.mjs';
+import { runShell, writeReport } from '../lib/shell.mjs';
 import { summarizeTestResults } from './vitest.mjs';
 
 const TOOL_MISSING = /not found|command not found|ERR_MODULE_NOT_FOUND|npm error/i;
@@ -20,10 +20,6 @@ function readJsonIfPresent(target) {
   } catch {
     return null;
   }
-}
-
-function writeTestsReport(reportsDir, payload) {
-  for (const file of REPORT_FILES.tests) writeReport(reportsDir, file, payload);
 }
 
 export default {
@@ -38,13 +34,13 @@ export default {
 
     if (result.status !== 0 && raw === null && TOOL_MISSING.test(result.stderr)) {
       const error = result.stderr.trim().split('\n')[0] || 'jest failed to run';
-      writeTestsReport(reportsDir, { ok: false, error });
+      writeReport(reportsDir, 'test-summary.json', { ok: false, error });
       console.log(`tests: ${error}`);
       return;
     }
 
     const summary = summarizeTestResults(raw, result.status === 0, hostRoot);
-    writeTestsReport(reportsDir, summary);
+    writeReport(reportsDir, 'test-summary.json', summary);
     console.log(`tests: exit ${result.status}, ${summary.failures.length} failing assertion(s)`);
   },
 };
