@@ -43,7 +43,7 @@ making the code correct. Each one is itself gated and will block the PR:
 - adding `@ts-ignore`, `@ts-expect-error` or `as any` to silence a type error
 - adding an inline `eslint-disable` to silence a rule
 - swallowing an error in an empty `catch`
-- regenerating `baseline.json` to make a regression disappear
+- regenerating `.loopwright/baseline.json` to make a regression disappear
 - adding an `audit.ignore` entry for an advisory that does have a fix available
 
 Dependency advisories have no dev/prod exemption — a critical blocks wherever
