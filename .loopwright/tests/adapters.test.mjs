@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { parseTscOutput } from '../scripts/adapters/tsc.mjs';
 import { parseEslintJson } from '../scripts/adapters/eslint.mjs';
 import { summarizeTestResults } from '../scripts/adapters/vitest.mjs';
+import { parseBiomeJson } from '../scripts/adapters/biome.mjs';
 import { jscpdArgs } from '../scripts/adapters/jscpd.mjs';
 
 const fixture = (name) => readFileSync(join(import.meta.dirname, 'fixtures', name), 'utf8');
@@ -43,6 +44,23 @@ describe('vitest adapter', () => {
   it('relativizes absolute failure file paths against an explicit root', () => {
     const summary = summarizeTestResults(raw, false, '/repo');
     expect(summary.failures[0].file).toBe('tests/example.test.mjs');
+  });
+});
+
+describe('jest adapter', () => {
+  it('reuses the shared summarizer over jest JSON output', () => {
+    const summary = summarizeTestResults(JSON.parse(fixture('jest-results.json')), false);
+    expect(summary).toMatchObject({ total: 5, failed: 2 });
+    expect(summary.failures).toHaveLength(2);
+  });
+});
+
+describe('biome adapter', () => {
+  it('normalizes biome diagnostics to the neutral lint schema', () => {
+    const report = parseBiomeJson(fixture('biome.json'));
+    expect(report).toMatchObject({ ok: false, errors: 2, warnings: 1 });
+    expect(report.messages).toHaveLength(3);
+    expect(report.messages.find((m) => m.file === 'unknown')).toBeTruthy();
   });
 });
 
