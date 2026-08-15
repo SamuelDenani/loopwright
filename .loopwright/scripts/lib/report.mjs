@@ -96,7 +96,7 @@ function actionPlan(blockingMetrics, blockingViolations) {
 }
 
 function headerSection(result, groups) {
-  const { context, missing } = result;
+  const { context, failed } = result;
   const blockerCount = groups.blockingMetrics.length + groups.blockingViolations.length;
   const warningCount = groups.warningMetrics.length + groups.warningViolations.length;
 
@@ -113,9 +113,9 @@ function headerSection(result, groups) {
   if (groups.improvedMetrics.length > 0) summary.push(`${groups.improvedMetrics.length} improvement(s) 📈`);
 
   const out = [COMMENT_MARKER, heading, '', summary.join(' · '), ''];
-  if (missing.length > 0) {
+  if (failed.length > 0) {
     out.push(
-      `> ⚠️ Missing input: ${missing.map((entry) => `\`${entry}\``).join(', ')}. Run \`npm run quality:collect\` before the gate.`,
+      `> 🚫 Collector failure: ${failed.map((entry) => `\`${entry.collector}\` (${entry.error})`).join('; ')}. Infrastructure failures block — this is not the same as an unconfigured tool.`,
       '',
     );
   }

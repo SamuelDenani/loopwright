@@ -82,7 +82,9 @@ function checkRatchet(policy, current, baseline, unit) {
   };
 }
 
-function evaluateMetric(id, policy, current, baseline) {
+const EMPTY_CONTEXT = { unconfiguredMetricIds: new Set(), failedByMetricId: new Map() };
+
+function evaluateMetric(id, policy, current, baseline, context = EMPTY_CONTEXT) {
   const unit = policy.unit ?? '';
   const base = {
     id,
@@ -93,6 +95,23 @@ function evaluateMetric(id, policy, current, baseline) {
     direction: policy.direction ?? 'lower-better',
     tolerance: policy.tolerance ?? 0,
   };
+
+  // These two checks fire before anything else — including the hard-limit
+  // check below — so an unconfigured collector never phantom-blocks on a
+  // hardMin/hardMax (a repo with no test runner yet must not be blocked by
+  // `coverage.lines` hardMin: 80), and a collector that failed to run always
+  // blocks instead of silently reading as "no data, just a warning".
+  if (context.unconfiguredMetricIds.has(id)) {
+    return {
+      ...base,
+      current: null,
+      status: STATUS.WARN,
+      reason: 'collector not configured — see docs/loopwright/quality-gate.md',
+    };
+  }
+  if (context.failedByMetricId.has(id)) {
+    return { ...base, status: STATUS.BLOCK, reason: `collector failed: ${context.failedByMetricId.get(id)}` };
+  }
 
   if (current === undefined || current === null) {
     return { ...base, status: STATUS.WARN, reason: 'no data collected for this metric' };
@@ -109,15 +128,41 @@ function evaluateMetric(id, policy, current, baseline) {
 }
 
 export function format(value, unit) {
+  if (value === null || value === undefined) return 'n/a';
   if (typeof value !== 'number') return String(value);
   const rounded = Number.isInteger(value) ? String(value) : value.toFixed(2);
   return unit ? `${rounded}${unit}` : rounded;
 }
 
-export function evaluateMetrics(config, current, baselineMetrics) {
+export function evaluateMetrics(config, current, baselineMetrics, context = EMPTY_CONTEXT) {
   return Object.entries(config.metrics).map(([id, policy]) =>
-    evaluateMetric(id, policy, current[id], baselineMetrics?.[id]),
+    evaluateMetric(id, policy, current[id], baselineMetrics?.[id], context),
   );
+}
+
+/**
+ * The anti-cheat rule: a collector that RAN at baseline time (its adapter
+ * wasn't `'unconfigured'`) and is now unconfigured is not "no data" — it is
+ * evidence someone turned the tool off to pass the gate. That is a synthetic
+ * blocking violation, independent of the per-metric WARN a now-unconfigured
+ * collector otherwise produces.
+ */
+export function collectorRegressions(baselineCollectors, unconfigured) {
+  if (!baselineCollectors) return [];
+  const nowUnconfigured = new Set(unconfigured ?? []);
+  const violations = [];
+  for (const [name, adapter] of Object.entries(baselineCollectors)) {
+    if (adapter === 'unconfigured') continue;
+    if (!nowUnconfigured.has(name)) continue;
+    violations.push({
+      status: STATUS.BLOCK,
+      file: '.loopwright/config.json',
+      line: 0,
+      subject: name,
+      reason: `collector "${name}" was configured at baseline ("${adapter}") but is now unconfigured — disabling a tool is not a way to pass the gate`,
+    });
+  }
+  return violations;
 }
 
 // --- shape limits ------------------------------------------------------------

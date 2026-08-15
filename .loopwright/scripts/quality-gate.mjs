@@ -15,8 +15,8 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { collectMetrics } from './lib/collect-metrics.mjs';
-import { STATUS, evaluateMetrics, evaluateShape, snapshotFiles, worstStatus } from './lib/evaluate.mjs';
+import { collectMetrics, COLLECTOR_METRICS } from './lib/collect-metrics.mjs';
+import { STATUS, evaluateMetrics, evaluateShape, snapshotFiles, worstStatus, collectorRegressions } from './lib/evaluate.mjs';
 import { COMMENT_MARKER, renderConsole, renderMarkdown } from './lib/report.mjs';
 import { HOST_ROOT, REPORTS_DIR, CONFIG_PATH, BASELINE_PATH } from './lib/paths.mjs';
 
@@ -54,14 +54,20 @@ if (!config) {
 
 const baseline = loadJson(BASELINE_PATH, null);
 
-const { metrics: current, evidence, analysis, missing } = collectMetrics(HOST_ROOT, config);
+const { metrics: current, evidence, analysis, unconfigured, failed } = collectMetrics(HOST_ROOT, config);
 
 // --- baseline mode -----------------------------------------------------------
 
 if (UPDATE_BASELINE) {
-  if (missing.length > 0) {
-    console.error(`Refusing to write a baseline from incomplete data. Missing: ${missing.join(', ')}`);
-    console.error('Run `npm run quality:collect` first.');
+  // Unconfigured collectors are allowed into a baseline — that is the
+  // create-next-app day-one state, and it's what the `unconfigured` WARN
+  // path is for. A *failed* collector is different: it means a tool was
+  // supposed to run and didn't, so its "current" values are not trustworthy
+  // enough to lock in as the ratchet everyone else is measured against.
+  if (failed.length > 0) {
+    console.error(`Refusing to write a baseline: ${failed.length} collector(s) failed to run:`);
+    for (const entry of failed) console.error(`  - ${entry.collector}: ${entry.error}`);
+    console.error('Fix the collector(s) and re-run `npm run quality:collect` first.');
     process.exit(2);
   }
 
@@ -74,6 +80,7 @@ if (UPDATE_BASELINE) {
     metrics: current,
     totals: analysis.totals,
     files: snapshotFiles(analysis),
+    collectors: Object.fromEntries(Object.entries(config.collectors).map(([name, entry]) => [name, entry.adapter])),
   };
 
   writeFileSync(BASELINE_PATH, `${JSON.stringify(next, null, 2)}\n`);
@@ -84,8 +91,19 @@ if (UPDATE_BASELINE) {
 
 // --- gate mode ---------------------------------------------------------------
 
-const metricResults = evaluateMetrics(config, current, baseline?.metrics);
-const violations = evaluateShape(config, analysis, baseline?.files ?? {});
+// Translate collector-level unconfigured/failed status into the metric ids
+// each collector owns, so evaluateMetrics can apply the right per-metric
+// status instead of the collectors' consumers re-deriving this mapping.
+const unconfiguredMetricIds = new Set(unconfigured.flatMap((collector) => COLLECTOR_METRICS[collector] ?? []));
+const failedByMetricId = new Map(
+  failed.flatMap((entry) => (COLLECTOR_METRICS[entry.collector] ?? []).map((id) => [id, entry.error])),
+);
+
+const metricResults = evaluateMetrics(config, current, baseline?.metrics, { unconfiguredMetricIds, failedByMetricId });
+const violations = [
+  ...evaluateShape(config, analysis, baseline?.files ?? {}),
+  ...collectorRegressions(baseline?.collectors, unconfigured),
+];
 
 const statuses = [
   ...metricResults.map((entry) => entry.status),
@@ -117,7 +135,8 @@ const result = {
   violations,
   evidence,
   totals: analysis.totals,
-  missing,
+  unconfigured,
+  failed,
 };
 
 mkdirSync(REPORTS_DIR, { recursive: true });

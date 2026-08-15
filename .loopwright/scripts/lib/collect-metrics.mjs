@@ -54,14 +54,54 @@ function pct(entry) {
 }
 
 /**
- * Each collector below reads one report and contributes to the shared bag. They
- * are deliberately independent: a missing report degrades one metric family
- * instead of aborting the whole run.
+ * Metric ids owned by each collector family. Used to translate a collector
+ * name (from `unconfigured`/`failed`) into the metric ids that must inherit
+ * its status when `quality-gate.mjs` evaluates the current run.
  */
+export const COLLECTOR_METRICS = {
+  typecheck: ['typecheck.errors'],
+  lint: ['lint.errors', 'lint.warnings'],
+  tests: ['tests.failed', 'tests.suitesFailed', 'coverage.lines', 'coverage.branches', 'coverage.functions', 'coverage.statements'],
+  audit: ['audit.critical', 'audit.high', 'audit.suppressed'],
+  duplication: ['duplication.percentage'],
+};
+
+/**
+ * Each collector below reads one report and contributes to the shared bag.
+ * They are deliberately independent: one collector's status never aborts the
+ * whole run. `familyStatus` is the shared guard every family-scoped collector
+ * runs through first:
+ *
+ *   - report missing (adapter never ran / report file absent) -> `failed`
+ *   - `{ configured: false }` (dispatcher stamp for an unconfigured adapter)
+ *     -> `unconfigured`
+ *   - `{ ok: false, error }` (adapter's own tool-missing/parse-failure path)
+ *     -> `failed`
+ *   - otherwise the report is handed back for the collector to read
+ *
+ * `unconfigured` warns forever but never blocks; `failed` always blocks — an
+ * infrastructure failure must not look like a passing run.
+ */
+function familyStatus(ctx, collector, relativePath, baseDir = REPORTS_DIR) {
+  const report = readJson(baseDir, relativePath);
+  if (report === null) {
+    ctx.failed.push({ collector, error: `${relativePath} missing — collector did not run` });
+    return null;
+  }
+  if (report.configured === false) {
+    ctx.unconfigured.push(collector);
+    return null;
+  }
+  if (report.ok === false && report.error) {
+    ctx.failed.push({ collector, error: report.error });
+    return null;
+  }
+  return report;
+}
 
 function collectTypecheck(ctx) {
-  const report = readJson(REPORTS_DIR, 'typecheck.json');
-  if (!report) return ctx.missing.push('reports/typecheck.json');
+  const report = familyStatus(ctx, 'typecheck', 'typecheck.json');
+  if (!report) return;
 
   ctx.metrics['typecheck.errors'] = report.errorCount ?? 0;
   ctx.evidence['typecheck.errors'] = (report.diagnostics ?? [])
@@ -71,8 +111,8 @@ function collectTypecheck(ctx) {
 }
 
 function collectLint(ctx) {
-  const report = readJson(REPORTS_DIR, 'lint.json');
-  if (!report) return ctx.missing.push('lint.json');
+  const report = familyStatus(ctx, 'lint', 'lint.json');
+  if (!report) return;
   ctx.metrics['lint.errors'] = report.errors ?? 0;
   ctx.metrics['lint.warnings'] = report.warnings ?? 0;
   const toEvidence = (m) => ({ file: m.file, line: m.line ?? 0, snippet: `${m.rule ?? 'unknown'}: ${m.message}` });
@@ -81,9 +121,12 @@ function collectLint(ctx) {
 }
 
 function collectTests(ctx) {
-  const report = readJson(REPORTS_DIR, 'test-summary.json');
-  if (!report) return ctx.missing.push('reports/test-summary.json');
-  if (!report.ranSuccessfully) ctx.missing.push('reports/test-results.json (test runner produced no JSON)');
+  const report = familyStatus(ctx, 'tests', 'test-summary.json');
+  if (!report) return;
+  if (!report.ranSuccessfully) {
+    ctx.failed.push({ collector: 'tests', error: 'test-results.json missing — test runner produced no JSON' });
+    return;
+  }
 
   ctx.metrics['tests.failed'] = report.failed ?? 0;
   ctx.metrics['tests.suitesFailed'] = report.suitesFailed ?? 0;
@@ -94,9 +137,19 @@ function collectTests(ctx) {
   }));
 }
 
+/**
+ * Coverage is produced by the same `vitest --coverage` run as `tests`, so it
+ * rides on the `tests` collector's status rather than having its own: it only
+ * runs once `tests` is confirmed neither unconfigured nor failed, and a
+ * missing coverage-summary.json while tests ran is recorded as a `tests`
+ * failure (not a separate "coverage" collector) — see `COLLECTOR_METRICS`.
+ */
 function collectCoverage(ctx) {
   const report = readJson(resolve(REPORTS_DIR, 'coverage'), 'coverage-summary.json');
-  if (!report?.total) return ctx.missing.push('coverage/coverage-summary.json');
+  if (!report?.total) {
+    ctx.failed.push({ collector: 'tests', error: 'coverage/coverage-summary.json missing — collector did not run' });
+    return;
+  }
 
   for (const key of ['lines', 'branches', 'functions', 'statements']) {
     const value = pct(report.total[key]);
@@ -150,8 +203,12 @@ function activeSuppression(entry, rules, now) {
 }
 
 function collectAudit(ctx) {
-  const report = readJson(REPORTS_DIR, 'audit.json');
-  if (!report?.metadata?.vulnerabilities) return ctx.missing.push('reports/audit.json');
+  const report = familyStatus(ctx, 'audit', 'audit.json');
+  if (!report) return;
+  if (!report.metadata?.vulnerabilities) {
+    ctx.failed.push({ collector: 'audit', error: 'audit.json missing metadata.vulnerabilities' });
+    return;
+  }
 
   const rules = ctx.config.audit?.ignore ?? [];
   const now = Date.now();
@@ -199,9 +256,13 @@ function collectAudit(ctx) {
 }
 
 function collectDuplication(ctx) {
-  const report = readJson(REPORTS_DIR, 'jscpd/jscpd-report.json');
-  const total = report?.statistics?.total;
-  if (!total) return ctx.missing.push('reports/jscpd/jscpd-report.json');
+  const report = familyStatus(ctx, 'duplication', 'jscpd/jscpd-report.json');
+  if (!report) return;
+  const total = report.statistics?.total;
+  if (!total) {
+    ctx.failed.push({ collector: 'duplication', error: 'jscpd report missing statistics.total' });
+    return;
+  }
 
   ctx.metrics['duplication.percentage'] = Number((total.percentage ?? 0).toFixed(2));
   ctx.evidence['duplication.percentage'] = (report.duplicates ?? []).slice(0, 10).map((clone) => ({
@@ -245,17 +306,24 @@ function collectStaticAnalysis(ctx, analysis) {
 }
 
 export function collectMetrics(root, config) {
-  const ctx = { root, config, metrics: {}, evidence: {}, missing: [] };
+  const ctx = { root, config, metrics: {}, evidence: {}, unconfigured: [], failed: [] };
 
   collectTypecheck(ctx);
   collectLint(ctx);
   collectTests(ctx);
-  collectCoverage(ctx);
+  const testsOk = !ctx.unconfigured.includes('tests') && !ctx.failed.some((entry) => entry.collector === 'tests');
+  if (testsOk) collectCoverage(ctx);
   collectAudit(ctx);
   collectDuplication(ctx);
 
   const analysis = analyzeSources(listSourceFiles(root, config.sources), root);
   collectStaticAnalysis(ctx, analysis);
 
-  return { metrics: ctx.metrics, evidence: ctx.evidence, analysis, missing: ctx.missing };
+  return {
+    metrics: ctx.metrics,
+    evidence: ctx.evidence,
+    analysis,
+    unconfigured: ctx.unconfigured,
+    failed: ctx.failed,
+  };
 }
