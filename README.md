@@ -15,7 +15,10 @@ any repo and it wires in the full loop:
 - **A quality gate agents cannot cheat** — CI ratchets coverage, complexity,
   duplication, and advisories against a committed baseline, and blocks the
   classic agent shortcuts (`.only`, `as any`, assertion-free tests, empty
-  `catch`, baseline edits) as first-class violations.
+  `catch`) as first-class violations. Baseline edits are a different kind of
+  guard: the pre-commit hook and human review catch those, not the gate — a
+  PR that regenerates the baseline has to justify it explicitly in the
+  description.
 
 The gate is the only source of truth for "done"; merging is always the
 human's decision.
