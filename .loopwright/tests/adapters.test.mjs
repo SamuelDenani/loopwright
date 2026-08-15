@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseTscOutput } from '../scripts/adapters/tsc.mjs';
-import { parseEslintJson } from '../scripts/adapters/eslint.mjs';
+import eslintAdapter, { parseEslintJson } from '../scripts/adapters/eslint.mjs';
 import { summarizeTestResults } from '../scripts/adapters/vitest.mjs';
 import { parseBiomeJson } from '../scripts/adapters/biome.mjs';
 import { jscpdArgs } from '../scripts/adapters/jscpd.mjs';
@@ -24,6 +24,10 @@ describe('eslint adapter', () => {
     expect(report).toMatchObject({ ok: false, errors: 1, warnings: 1 });
     expect(report.messages[0]).toHaveProperty('rule');
     expect(['error', 'warning']).toContain(report.messages[0].severity);
+  });
+
+  it('defaultCommand excludes the vendored .loopwright/ layer from host lint', () => {
+    expect(eslintAdapter.defaultCommand).toContain("--ignore-pattern '.loopwright/**'");
   });
 });
 

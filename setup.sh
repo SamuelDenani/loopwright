@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time (idempotent) setup for a repo born from the loopwright template.
+# One-time (idempotent) setup for a repo using the loopwright layer.
 # Everything file-based ships with the template; this script configures the
 # GitHub state that cannot live in files, then records the initial quality
 # baseline. Safe to re-run, and safe to run on an existing repo you are

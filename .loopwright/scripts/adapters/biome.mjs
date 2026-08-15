@@ -74,11 +74,20 @@ export default {
       return;
     }
 
-    const messages = report.messages.map((message) => ({
-      ...message,
-      file: toPosix(relative(hostRoot, message.file)),
-    }));
-    writeLintReport(reportsDir, { ...report, messages });
-    console.log(`lint: ${report.errors} error(s), ${report.warnings} warning(s)`);
+    // Biome has no per-invocation ignore flag as robust as ESLint's
+    // --ignore-pattern, and while it can respect .gitignore via its VCS
+    // integration, that's opt-in/config-dependent and not something to rely
+    // on here. So `biome check .` may still traverse the vendored
+    // .loopwright/ layer; filter those diagnostics out after the fact
+    // instead, and recompute errors/warnings from what's left, so host lint
+    // results never include the vendored engine's own fixtures/reports.
+    const messages = report.messages
+      .map((message) => ({ ...message, file: toPosix(relative(hostRoot, message.file)) }))
+      .filter((message) => !message.file.startsWith('.loopwright/'));
+    const errors = messages.filter((message) => message.severity === 'error').length;
+    const warnings = messages.filter((message) => message.severity === 'warning').length;
+
+    writeLintReport(reportsDir, { ok: errors === 0, errors, warnings, messages });
+    console.log(`lint: ${errors} error(s), ${warnings} warning(s)`);
   },
 };

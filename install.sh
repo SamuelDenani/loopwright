@@ -20,9 +20,13 @@ else
 fi
 
 # --- engine: always synced ---------------------------------------------------
+# .loopwright/tests is deliberately NOT vendored: hosts don't run engine
+# tests (the CI steps that do are repo-guarded to SamuelDenani/loopwright),
+# and shipping them here would put fixture files under the host's own lint
+# root.
 mkdir -p .loopwright
-rm -rf .loopwright/scripts .loopwright/tests
-cp -R "$src/.loopwright/scripts" "$src/.loopwright/tests" .loopwright/
+rm -rf .loopwright/scripts
+cp -R "$src/.loopwright/scripts" .loopwright/
 for f in package.json package-lock.json config.default.json vitest.config.mjs claude-md-section.md; do
   cp "$src/.loopwright/$f" ".loopwright/$f"
 done

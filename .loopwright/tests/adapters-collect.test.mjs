@@ -99,6 +99,24 @@ describe('biome adapter collect()', () => {
     const report = JSON.parse(readFileSync(join(dir, 'lint.json'), 'utf8'));
     expect(report.error).toMatch(/no parseable JSON/i);
   });
+
+  it('filters out diagnostics inside the vendored .loopwright/ layer and recounts errors/warnings', () => {
+    const payload = {
+      summary: { errors: 2, warnings: 0 },
+      diagnostics: [
+        { category: 'lint/x', severity: 'error', description: 'real host bug', location: { path: { file: join(dir, 'src/a.js') } } },
+        { category: 'lint/y', severity: 'error', description: 'vendored noise', location: { path: { file: join(dir, '.loopwright/scripts/adapters/biome.mjs') } } },
+      ],
+    };
+    biome.collect({ command: echoJson(payload), cwd: dir, reportsDir: dir, hostRoot: dir });
+    const report = JSON.parse(readFileSync(join(dir, 'lint.json'), 'utf8'));
+    // Only the host-side diagnostic survives; the vendored one is dropped
+    // and the error count is recomputed, not taken from biome's own summary.
+    expect(report.errors).toBe(1);
+    expect(report.messages).toHaveLength(1);
+    expect(report.messages[0].file).toBe('src/a.js');
+    expect(report.ok).toBe(false);
+  });
 });
 
 describe('vitest adapter collect()', () => {

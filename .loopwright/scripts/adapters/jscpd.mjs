@@ -54,6 +54,34 @@ const EMPTY_REPORT = {
   duplicates: [],
 };
 
+/**
+ * Decides how collect() should react to a finished (or failed) spawnSync
+ * call. jscpd must fail closed: a crashed/missing binary or a non-zero exit
+ * is a real failure and must be reported as `{ ok: false, error }`, not
+ * silently swallowed into a clean "0% duplication" EMPTY_REPORT — that would
+ * let a broken duplication check pass the gate every time. EMPTY_REPORT is
+ * reserved for the genuinely clean case: the process exited 0 and simply had
+ * nothing to report (e.g. no clones found, so it wrote no file).
+ *
+ * Returns `{ ok: true, empty }` on a clean exit (status 0), or
+ * `{ ok: false, error }` when spawnSync itself errored (e.g. ENOENT — binary
+ * missing) or the process exited non-zero.
+ */
+export function jscpdOutcome(result, reportExists) {
+  if (result.error) {
+    return { ok: false, error: `jscpd failed to start: ${result.error.message ?? result.error}` };
+  }
+  if (result.status !== 0) {
+    const snippet = (result.stderr ?? '').trim().split('\n')[0];
+    const status = result.status ?? 'unknown';
+    return {
+      ok: false,
+      error: snippet ? `jscpd exited with status ${status}: ${snippet}` : `jscpd exited with status ${status}`,
+    };
+  }
+  return { ok: true, empty: !reportExists };
+}
+
 export default {
   name: 'jscpd',
   collector: 'duplication',
@@ -67,7 +95,13 @@ export default {
     if (result.stderr?.trim()) console.log(result.stderr.trim());
 
     const reportPath = resolve(reportsDir, REPORT_FILES.duplication[0]);
-    if (!existsSync(reportPath)) {
+    const outcome = jscpdOutcome(result, existsSync(reportPath));
+    if (!outcome.ok) {
+      writeReport(reportsDir, REPORT_FILES.duplication[0], { ok: false, error: outcome.error });
+      console.log(`jscpd: ${outcome.error}`);
+      return;
+    }
+    if (outcome.empty) {
       writeReport(reportsDir, REPORT_FILES.duplication[0], EMPTY_REPORT);
       console.log('jscpd: no report produced, wrote an empty one');
     }

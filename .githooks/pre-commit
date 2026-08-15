@@ -4,7 +4,7 @@
 # the authority (and catches --no-verify commits anyway). Host-agnostic: it
 # only runs checks that need no host toolchain (typecheck/lint are CI's job,
 # via the vendored engine in .loopwright/).
-# Wired by scripts/setup.sh via: git config core.hooksPath .githooks
+# Wired by setup.sh via: git config core.hooksPath .githooks
 set -euo pipefail
 
 fail() { echo "pre-commit: $1" >&2; exit 1; }

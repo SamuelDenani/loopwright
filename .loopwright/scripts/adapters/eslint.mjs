@@ -55,7 +55,10 @@ function writeLintReport(reportsDir, payload) {
 export default {
   name: 'eslint',
   collector: 'lint',
-  defaultCommand: 'npx eslint . --format json',
+  // --ignore-pattern excludes the vendored .loopwright/ layer: it ships its
+  // own fixtures and reports that are not the host's code, so ESLint must
+  // never traverse into it when run from the host's config.
+  defaultCommand: "npx eslint . --format json --ignore-pattern '.loopwright/**'",
   collect(ctx) {
     const { command, cwd, reportsDir, hostRoot } = ctx;
     const result = runShell(command, cwd);

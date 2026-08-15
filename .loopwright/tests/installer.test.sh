@@ -26,6 +26,13 @@ LOOPWRIGHT_SOURCE="$SOURCE" bash "$SOURCE/install.sh"
 [ -f .loopwright/config.json ] || { echo "FAIL: no config.json generated"; exit 1; }
 grep -q '"adapter": "unconfigured"' .loopwright/config.json || { echo "FAIL: tests should be unconfigured"; exit 1; }
 grep -q 'loopwright:start' CLAUDE.md || { echo "FAIL: CLAUDE.md section missing"; exit 1; }
+
+# Regression: .loopwright/tests must never be vendored into a host repo — a
+# host running its own lint over the tree would otherwise trip over the
+# engine's fixtures. And the eslint adapter must never traverse .loopwright/
+# when it lints the host.
+[ ! -d .loopwright/tests ] || { echo "FAIL: .loopwright/tests was vendored into the host"; exit 1; }
+grep -q -- "--ignore-pattern '.loopwright/\*\*'" .loopwright/scripts/adapters/eslint.mjs || { echo "FAIL: eslint adapter default command missing --ignore-pattern '.loopwright/**'"; exit 1; }
 [ "$(grep -cx '\.loopwright/reports/' .gitignore)" = "1" ] || { echo "FAIL: gitignore reports line missing/duplicated"; exit 1; }
 [ "$(grep -cx '\.loopwright/node_modules/' .gitignore)" = "1" ] || { echo "FAIL: gitignore node_modules line missing/duplicated"; exit 1; }
 [ "$(grep -c 'node_modules/.loopwright' .gitignore)" = "0" ] || { echo "FAIL: gitignore lines concatenated (no trailing newline bug)"; exit 1; }

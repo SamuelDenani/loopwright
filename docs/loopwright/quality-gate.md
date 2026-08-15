@@ -15,14 +15,17 @@ workflow half-way, and the agent always gets one authoritative verdict to
 work against.
 
 ```
-npm ci
-  └─ typecheck:ci ──┐
-     lint:ci ───────┤
-     test:coverage:ci ──┤ all exit 0, all write .loopwright/reports/
-     audit:ci ──────┤
-     duplication:ci ┘
-        └─ quality-gate.mjs ──► .loopwright/reports/quality-gate.{json,md} + exit 0|1
-             └─ sticky comment + step summary + artifacts
+node .loopwright/scripts/run-report.mjs --all
+  ├─ typecheck (tsc)      ─┐
+  ├─ lint (eslint/biome)   │
+  ├─ tests (vitest/jest)   ├─ each adapter exits 0, writes .loopwright/reports/*.json
+  ├─ audit (npm audit)     │
+  └─ duplication (jscpd)  ─┘
+       │
+       ▼
+node .loopwright/scripts/quality-gate.mjs
+  └─► .loopwright/reports/quality-gate.{json,md} + exit 0|1
+       └─ sticky comment + step summary + artifacts
 ```
 
 ## Running it locally
