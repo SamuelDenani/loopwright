@@ -33,8 +33,9 @@ else
 fi
 
 # --- branch protection -------------------------------------------------------
-# The Quality gate check must pass before anything merges into main.
-gh api -X PUT "repos/${REPO}/branches/main/protection" \
+# The Quality gate check must pass before anything merges into the default branch.
+BRANCH=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)
+gh api -X PUT "repos/${REPO}/branches/${BRANCH}/protection" \
   --input - >/dev/null <<'JSON'
 {
   "required_status_checks": { "strict": false, "contexts": ["Quality gate"] },
@@ -45,21 +46,20 @@ gh api -X PUT "repos/${REPO}/branches/main/protection" \
   "allow_deletions": false
 }
 JSON
-echo "protection ok:  main requires the Quality gate check"
+echo "protection ok:  ${BRANCH} requires the Quality gate check"
 
 # --- pre-commit hook ---------------------------------------------------------
 git config core.hooksPath .githooks
 echo "hooks ok:       core.hooksPath -> .githooks (fast pre-commit checks)"
 
 # --- initial baseline --------------------------------------------------------
-if [ -f quality-baseline.json ]; then
-  echo "baseline ok:    quality-baseline.json exists"
+if [ -f .loopwright/baseline.json ]; then
+  echo "baseline ok:    .loopwright/baseline.json exists"
 else
-  [ -d node_modules ] || npm install
-  npm run quality:collect
-  npm run quality:baseline
+  node .loopwright/scripts/run-report.mjs --all
+  node .loopwright/scripts/quality-gate.mjs --update-baseline
   echo "baseline created — review and commit it:"
-  echo "  git add quality-baseline.json && git commit -m 'chore: record initial quality baseline'"
+  echo "  ALLOW_BASELINE=1 git commit .loopwright/baseline.json -m 'chore: record initial quality baseline'"
 fi
 
 echo "Done."
