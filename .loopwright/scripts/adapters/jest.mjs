@@ -4,7 +4,7 @@
  * TEMPORARY: this collect() only runs the command and dumps its raw output.
  * Task 5 replaces it with a real jest JSON + coverage-summary parser.
  */
-import { runShell, writeReport, REPORT_FILES } from '../run-report.mjs';
+import { runShell, writeReport, REPORT_FILES } from '../lib/shell.mjs';
 
 export default {
   name: 'jest',

@@ -13,32 +13,14 @@
  *
  * Usage: node .loopwright/scripts/run-report.mjs <typecheck|lint|tests|audit|duplication|--all>
  */
-import { spawnSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { HOST_ROOT, REPORTS_DIR, CONFIG_PATH } from './lib/paths.mjs';
 import { ADAPTERS } from './adapters/index.mjs';
+import { runShell, writeReport, REPORT_FILES } from './lib/shell.mjs';
 
-export const REPORT_FILES = {
-  typecheck: ['typecheck.json'],
-  lint: ['lint.json'],
-  tests: ['test-summary.json', 'test-results.json'],
-  audit: ['audit.json'],
-  duplication: ['jscpd/jscpd-report.json'],
-};
-
-export function runShell(command, cwd) {
-  const result = spawnSync(command, { shell: true, cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-  return { status: result.status ?? 1, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
-}
-
-export function writeReport(reportsDir, relativePath, payload) {
-  const target = resolve(reportsDir, relativePath);
-  mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(target, `${JSON.stringify(payload, null, 2)}\n`);
-}
+export { runShell, writeReport, REPORT_FILES };
 
 export function writeUnconfigured(collector, reportsDir) {
   for (const file of REPORT_FILES[collector]) writeReport(reportsDir, file, { configured: false });

@@ -71,36 +71,19 @@ function collectTypecheck(ctx) {
 }
 
 function collectLint(ctx) {
-  const report = readJson(REPORTS_DIR, 'eslint.json');
-  if (!report) return ctx.missing.push('reports/eslint.json');
-
-  let errors = 0;
-  let warnings = 0;
-  const messages = [];
-  for (const file of report) {
-    errors += file.errorCount ?? 0;
-    warnings += file.warningCount ?? 0;
-    const path = toPosix(relative(ctx.root, file.filePath ?? ''));
-    for (const message of file.messages ?? []) {
-      messages.push({
-        file: path,
-        line: message.line ?? 0,
-        severity: message.severity === 2 ? 'error' : 'warning',
-        snippet: `${message.ruleId ?? 'unknown'}: ${message.message}`,
-      });
-    }
-  }
-
-  ctx.metrics['lint.errors'] = errors;
-  ctx.metrics['lint.warnings'] = warnings;
-  ctx.evidence['lint.errors'] = messages.filter((entry) => entry.severity === 'error').slice(0, 15);
-  ctx.evidence['lint.warnings'] = messages.filter((entry) => entry.severity === 'warning').slice(0, 15);
+  const report = readJson(REPORTS_DIR, 'lint.json');
+  if (!report) return ctx.missing.push('lint.json');
+  ctx.metrics['lint.errors'] = report.errors ?? 0;
+  ctx.metrics['lint.warnings'] = report.warnings ?? 0;
+  const toEvidence = (m) => ({ file: m.file, line: m.line ?? 0, snippet: `${m.rule ?? 'unknown'}: ${m.message}` });
+  ctx.evidence['lint.errors'] = (report.messages ?? []).filter((m) => m.severity === 'error').slice(0, 15).map(toEvidence);
+  ctx.evidence['lint.warnings'] = (report.messages ?? []).filter((m) => m.severity === 'warning').slice(0, 15).map(toEvidence);
 }
 
 function collectTests(ctx) {
   const report = readJson(REPORTS_DIR, 'test-summary.json');
   if (!report) return ctx.missing.push('reports/test-summary.json');
-  if (!report.ranSuccessfully) ctx.missing.push('reports/test-results.json (vitest produced no JSON)');
+  if (!report.ranSuccessfully) ctx.missing.push('reports/test-results.json (test runner produced no JSON)');
 
   ctx.metrics['tests.failed'] = report.failed ?? 0;
   ctx.metrics['tests.suitesFailed'] = report.suitesFailed ?? 0;
