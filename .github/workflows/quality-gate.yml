@@ -45,7 +45,7 @@ jobs:
         run: npm ci
         working-directory: .loopwright
 
-      - name: Engine unit tests (loopwright repo only guard is unnecessary — vendored copies ship tests too)
+      - name: Engine unit tests
         if: github.repository == 'SamuelDenani/loopwright'
         run: npx vitest run
         working-directory: .loopwright
