@@ -10,9 +10,10 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, join, relative, resolve } from 'node:path';
 import { analyzeSources } from './analyze-source.mjs';
+import { REPORTS_DIR } from './paths.mjs';
 
-function readJson(root, relativePath) {
-  const target = resolve(root, relativePath);
+function readJson(dir, relativePath) {
+  const target = resolve(dir, relativePath);
   if (!existsSync(target)) return null;
   try {
     return JSON.parse(readFileSync(target, 'utf8'));
@@ -59,7 +60,7 @@ function pct(entry) {
  */
 
 function collectTypecheck(ctx) {
-  const report = readJson(ctx.root, 'reports/typecheck.json');
+  const report = readJson(REPORTS_DIR, 'typecheck.json');
   if (!report) return ctx.missing.push('reports/typecheck.json');
 
   ctx.metrics['typecheck.errors'] = report.errorCount ?? 0;
@@ -70,7 +71,7 @@ function collectTypecheck(ctx) {
 }
 
 function collectLint(ctx) {
-  const report = readJson(ctx.root, 'reports/eslint.json');
+  const report = readJson(REPORTS_DIR, 'eslint.json');
   if (!report) return ctx.missing.push('reports/eslint.json');
 
   let errors = 0;
@@ -97,7 +98,7 @@ function collectLint(ctx) {
 }
 
 function collectTests(ctx) {
-  const report = readJson(ctx.root, 'reports/test-summary.json');
+  const report = readJson(REPORTS_DIR, 'test-summary.json');
   if (!report) return ctx.missing.push('reports/test-summary.json');
   if (!report.ranSuccessfully) ctx.missing.push('reports/test-results.json (vitest produced no JSON)');
 
@@ -111,7 +112,7 @@ function collectTests(ctx) {
 }
 
 function collectCoverage(ctx) {
-  const report = readJson(ctx.root, 'coverage/coverage-summary.json');
+  const report = readJson(resolve(REPORTS_DIR, 'coverage'), 'coverage-summary.json');
   if (!report?.total) return ctx.missing.push('coverage/coverage-summary.json');
 
   for (const key of ['lines', 'branches', 'functions', 'statements']) {
@@ -166,7 +167,7 @@ function activeSuppression(entry, rules, now) {
 }
 
 function collectAudit(ctx) {
-  const report = readJson(ctx.root, 'reports/audit.json');
+  const report = readJson(REPORTS_DIR, 'audit.json');
   if (!report?.metadata?.vulnerabilities) return ctx.missing.push('reports/audit.json');
 
   const rules = ctx.config.audit?.ignore ?? [];
@@ -215,7 +216,7 @@ function collectAudit(ctx) {
 }
 
 function collectDuplication(ctx) {
-  const report = readJson(ctx.root, 'reports/jscpd/jscpd-report.json');
+  const report = readJson(REPORTS_DIR, 'jscpd/jscpd-report.json');
   const total = report?.statistics?.total;
   if (!total) return ctx.missing.push('reports/jscpd/jscpd-report.json');
 

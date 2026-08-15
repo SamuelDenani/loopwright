@@ -1,37 +1,17 @@
 {
   "name": "loopwright",
-  "version": "0.1.0",
-  "description": "Template for AI-assisted TypeScript projects: RFC-driven issue flow, agentic execution loop, and a CI quality gate that agents cannot cheat.",
+  "version": "0.2.0",
+  "description": "Vendorable quality layer for AI-assisted JS/TS repos: RFC-driven issue flow, agentic execution loop, and a CI quality gate that agents cannot cheat.",
   "private": true,
   "type": "module",
-  "engines": {
-    "node": ">=20.11"
-  },
+  "engines": { "node": ">=20.11" },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "typecheck:ci": "node scripts/run-report.mjs typecheck",
-    "lint": "eslint .",
-    "lint:ci": "node scripts/run-report.mjs lint",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "test:coverage:ci": "node scripts/run-report.mjs test",
-    "audit:ci": "node scripts/run-report.mjs audit",
-    "duplication:ci": "node scripts/run-report.mjs jscpd",
-    "quality:collect": "npm run typecheck:ci && npm run lint:ci && npm run test:coverage:ci && npm run audit:ci && npm run duplication:ci",
-    "quality:gate": "node scripts/quality-gate.mjs",
-    "quality:baseline": "node scripts/quality-gate.mjs --update-baseline",
-    "quality": "npm run quality:collect && npm run quality:gate"
+    "quality": "node .loopwright/scripts/run-report.mjs --all && node .loopwright/scripts/quality-gate.mjs",
+    "lint": "eslint ."
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
-    "@types/node": "^22.10.2",
-    "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^9.17.0",
-    "globals": "^15.14.0",
-    "jscpd": "^4.0.5",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.1",
-    "vitest": "^4.1.10"
+    "globals": "^15.14.0"
   }
 }

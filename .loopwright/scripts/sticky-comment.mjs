@@ -17,9 +17,11 @@ import { existsSync, readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { COMMENT_MARKER } from './lib/report.mjs';
+import { REPORTS_DIR } from './lib/paths.mjs';
 
-const ROOT = resolve(import.meta.dirname, '..');
-const bodyPath = resolve(ROOT, process.argv[2] ?? 'reports/quality-gate.md');
+const bodyPath = process.argv[2]
+  ? resolve(process.cwd(), process.argv[2])
+  : resolve(REPORTS_DIR, 'quality-gate.md');
 
 const repo = process.env.GITHUB_REPOSITORY;
 const prNumber = process.env.PR_NUMBER;

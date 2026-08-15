@@ -12,9 +12,10 @@
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { HOST_ROOT, REPORTS_DIR } from './lib/paths.mjs';
 
-const ROOT = resolve(import.meta.dirname, '..');
-const REPORTS = resolve(ROOT, 'reports');
+const ROOT = HOST_ROOT;
+const REPORTS = REPORTS_DIR;
 
 function writeReport(relativePath, payload) {
   const target = resolve(ROOT, relativePath);

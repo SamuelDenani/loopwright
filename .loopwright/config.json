@@ -1,10 +1,13 @@
 {
-  "sources": {
-    "roots": ["src", "tests"],
-    "extensions": [".ts"],
-    "ignore": ["**/*.d.ts"]
+  "sources": { "roots": [".loopwright/scripts", ".loopwright/tests"], "extensions": [".mjs"], "ignore": [] },
+
+  "collectors": {
+    "typecheck":   { "adapter": "unconfigured" },
+    "lint":        { "adapter": "eslint" },
+    "tests":       { "adapter": "vitest", "command": "npx vitest run --coverage", "cwd": ".loopwright" },
+    "audit":       { "adapter": "npm-audit" },
+    "duplication": { "adapter": "jscpd" }
   },
-  "baselineFile": "quality-baseline.json",
 
   "//audit": "No prod/dev split: a PR is either deployable or it is not. The escape valve is this list, and every entry must carry an `expires` date — an expired suppression stops suppressing and the advisory blocks again. Match by `advisory` (GHSA id or npm source id) and/or `package`.",
   "audit": {

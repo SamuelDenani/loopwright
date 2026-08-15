@@ -18,8 +18,8 @@ import { resolve } from 'node:path';
 import { collectMetrics } from './lib/collect-metrics.mjs';
 import { STATUS, evaluateMetrics, evaluateShape, snapshotFiles, worstStatus } from './lib/evaluate.mjs';
 import { COMMENT_MARKER, renderConsole, renderMarkdown } from './lib/report.mjs';
+import { HOST_ROOT, REPORTS_DIR, CONFIG_PATH, BASELINE_PATH } from './lib/paths.mjs';
 
-const ROOT = resolve(import.meta.dirname, '..');
 const argv = new Set(process.argv.slice(2));
 const UPDATE_BASELINE = argv.has('--update-baseline');
 const JSON_ONLY = argv.has('--json');
@@ -30,33 +30,31 @@ function log(...args) {
 
 function git(...args) {
   try {
-    return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' }).trim();
+    return execFileSync('git', args, { cwd: HOST_ROOT, encoding: 'utf8' }).trim();
   } catch {
     return '';
   }
 }
 
 function loadJson(path, fallback) {
-  const target = resolve(ROOT, path);
-  if (!existsSync(target)) return fallback;
+  if (!existsSync(path)) return fallback;
   try {
-    return JSON.parse(readFileSync(target, 'utf8'));
+    return JSON.parse(readFileSync(path, 'utf8'));
   } catch (error) {
     console.error(`Could not parse ${path}: ${error.message}`);
     process.exit(2);
   }
 }
 
-const config = loadJson('quality-gate.config.json', null);
+const config = loadJson(CONFIG_PATH, null);
 if (!config) {
-  console.error('quality-gate.config.json is missing.');
+  console.error(`${CONFIG_PATH} is missing.`);
   process.exit(2);
 }
 
-const baselinePath = config.baselineFile ?? 'quality-baseline.json';
-const baseline = loadJson(baselinePath, null);
+const baseline = loadJson(BASELINE_PATH, null);
 
-const { metrics: current, evidence, analysis, missing } = collectMetrics(ROOT, config);
+const { metrics: current, evidence, analysis, missing } = collectMetrics(HOST_ROOT, config);
 
 // --- baseline mode -----------------------------------------------------------
 
@@ -78,8 +76,8 @@ if (UPDATE_BASELINE) {
     files: snapshotFiles(analysis),
   };
 
-  writeFileSync(resolve(ROOT, baselinePath), `${JSON.stringify(next, null, 2)}\n`);
-  log(`Baseline written to ${baselinePath} at commit ${next.commit.slice(0, 7)}.`);
+  writeFileSync(BASELINE_PATH, `${JSON.stringify(next, null, 2)}\n`);
+  log(`Baseline written to ${BASELINE_PATH} at commit ${next.commit.slice(0, 7)}.`);
   log(renderConsole({ metrics: evaluateMetrics(config, current, next.metrics), violations: [] }));
   process.exit(0);
 }
@@ -122,11 +120,11 @@ const result = {
   missing,
 };
 
-mkdirSync(resolve(ROOT, 'reports'), { recursive: true });
-writeFileSync(resolve(ROOT, 'reports/quality-gate.json'), `${JSON.stringify(result, null, 2)}\n`);
+mkdirSync(REPORTS_DIR, { recursive: true });
+writeFileSync(resolve(REPORTS_DIR, 'quality-gate.json'), `${JSON.stringify(result, null, 2)}\n`);
 
 const markdown = renderMarkdown(result);
-writeFileSync(resolve(ROOT, 'reports/quality-gate.md'), `${markdown}\n`);
+writeFileSync(resolve(REPORTS_DIR, 'quality-gate.md'), `${markdown}\n`);
 
 if (JSON_ONLY) {
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
@@ -134,14 +132,14 @@ if (JSON_ONLY) {
   log(renderConsole(result));
   log('');
   if (!baseline) {
-    log('No baseline found. Run `npm run quality:baseline` and commit quality-baseline.json.');
+    log('No baseline found. Run `node .loopwright/scripts/quality-gate.mjs --update-baseline` and commit .loopwright/baseline.json.');
   }
   log(
     verdict === 'block'
       ? `QUALITY GATE FAILED — ${result.counts.blocking} blocker(s), ${result.counts.warning} warning(s).`
       : `Quality gate passed — ${result.counts.warning} warning(s), ${result.counts.improved} improvement(s).`,
   );
-  log('Reports: reports/quality-gate.json, reports/quality-gate.md');
+  log('Reports: .loopwright/reports/quality-gate.json, .loopwright/reports/quality-gate.md');
 }
 
 // GitHub step summary, when running in Actions.
