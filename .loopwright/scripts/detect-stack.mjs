@@ -8,12 +8,16 @@
  *
  * Usage: node .loopwright/scripts/detect-stack.mjs
  */
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { LOOPWRIGHT_DIR, HOST_ROOT, CONFIG_PATH } from './lib/paths.mjs';
 
 const CANDIDATE_ROOTS = ['src', 'app', 'pages', 'lib', 'components', 'server', 'tests', '__tests__', 'test'];
+
+function isDirectory(path) {
+  return existsSync(path) && statSync(path).isDirectory();
+}
 
 function readDeps(hostRoot, notices) {
   const pkgPath = join(hostRoot, 'package.json');
@@ -69,7 +73,7 @@ function detectAudit(hostRoot, notices) {
 }
 
 function detectSources(hostRoot, deps, notices) {
-  const roots = CANDIDATE_ROOTS.filter((d) => existsSync(join(hostRoot, d)));
+  const roots = CANDIDATE_ROOTS.filter((d) => isDirectory(join(hostRoot, d)));
   if (roots.length === 0) {
     notices.push('sources: no conventional source directory found — defaulting roots to ["src"]');
     roots.push('src');

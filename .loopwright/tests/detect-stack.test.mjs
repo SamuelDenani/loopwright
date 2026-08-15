@@ -43,4 +43,11 @@ describe('detectStack', () => {
     }
     expect(result.collectors.duplication.adapter).toBe('jscpd');
   });
+
+  it('does not mistake a plain file named "src" for a source directory', () => {
+    const dir = host({}, ['src'], []);
+    const result = detectStack(dir);
+    expect(result.sources.roots).toEqual(['src']);
+    expect(result.notices.join(' ')).toMatch(/no conventional source directory/);
+  });
 });
