@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { STATUS, evaluateMetrics, collectorRegressions, format } from '../scripts/lib/evaluate.mjs';
 import { COLLECTOR_METRICS } from '../scripts/lib/collect-metrics.mjs';
+import { renderMarkdown } from '../scripts/lib/report.mjs';
 
 const config = { metrics: {
   'coverage.lines': { direction: 'higher-better', hardMin: 80, tolerance: 0.5, onRegression: 'block' },
@@ -67,5 +68,57 @@ describe('COLLECTOR_METRICS', () => {
     expect(COLLECTOR_METRICS.typecheck).toEqual(['typecheck.errors']);
     expect(COLLECTOR_METRICS.tests).toContain('coverage.lines');
     expect(COLLECTOR_METRICS.tests).toContain('tests.failed');
+  });
+});
+
+describe('renderMarkdown action plan for a collector-regression violation', () => {
+  it('uses the violation\'s own reason, not the shape-limits remediation', () => {
+    const [regression] = collectorRegressions({ typecheck: 'tsc' }, ['typecheck']);
+    const result = {
+      verdict: 'block',
+      context: { commit: 'abc1234', branch: 'main', baselineCommit: 'def5678', hasBaseline: true },
+      metrics: [],
+      violations: [regression],
+      evidence: {},
+      failed: [],
+    };
+
+    const markdown = renderMarkdown(result);
+
+    // Must not mislabel an anti-cheat blocker as a shape-limit "split the
+    // function" fix — that remediation text is wrong for this violation and,
+    // per CLAUDE.md, a fixing agent follows the action plan literally.
+    expect(markdown).not.toContain('Shape limits');
+    expect(markdown).not.toContain('Split the function');
+    // Must instead surface the violation's own reason as the action step.
+    expect(markdown).toContain(regression.reason);
+    expect(markdown).toContain('typecheck');
+  });
+
+  it('still rolls up shape violations under "Shape limits" as before', () => {
+    const shapeViolation = {
+      status: STATUS.BLOCK,
+      subject: 'someFunction()',
+      file: 'src/foo.mjs',
+      line: 12,
+      dimension: 'function length',
+      limit: 80,
+      softLimit: 45,
+      baseline: null,
+      reason: 'function length is 90 lines (soft 45, hard 80) — new code over the hard limit',
+    };
+    const result = {
+      verdict: 'block',
+      context: { commit: 'abc1234', branch: 'main', baselineCommit: null, hasBaseline: false },
+      metrics: [],
+      violations: [shapeViolation],
+      evidence: {},
+      failed: [],
+    };
+
+    const markdown = renderMarkdown(result);
+
+    expect(markdown).toContain('Shape limits');
+    expect(markdown).toContain('someFunction()');
   });
 });

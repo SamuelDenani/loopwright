@@ -85,13 +85,28 @@ function actionPlan(blockingMetrics, blockingViolations) {
   for (const entry of blockingMetrics) {
     steps.push(`**${entry.label}** (${format(entry.current, entry.unit)}) — ${remediationFor(entry.id)}`);
   }
-  if (blockingViolations.length > 0) {
+
+  // Shape violations (dimension/limit/softLimit set) share one remediation —
+  // "split the function" — and are usually many-per-function, so they're
+  // named once and rolled up. Other violations (e.g. the anti-cheat
+  // collector-regression check in evaluate.mjs, which carries no `dimension`)
+  // are not shape violations and have nothing to do with splitting a
+  // function: each gets its own step using its own `reason` as the
+  // remediation instead of the shape-limits text.
+  const shapeViolations = blockingViolations.filter((violation) => violation.dimension !== undefined);
+  const otherViolations = blockingViolations.filter((violation) => violation.dimension === undefined);
+
+  if (shapeViolations.length > 0) {
     // One function usually breaks several dimensions at once; name it once.
-    const unique = [...new Set(blockingViolations.map((violation) => violation.subject))];
+    const unique = [...new Set(shapeViolations.map((violation) => violation.subject))];
     const shown = unique.slice(0, 5).map((subject) => `\`${subject}\``).join(', ');
     const rest = unique.length > 5 ? ` and ${unique.length - 5} more` : '';
     steps.push(`**Shape limits** — ${shown}${rest}. ${REMEDIATION['complexity.']}`);
   }
+  for (const violation of otherViolations) {
+    steps.push(`**${violation.subject}** — ${violation.reason}`);
+  }
+
   return steps.map((step, index) => `${index + 1}. ${step}`).join('\n');
 }
 
