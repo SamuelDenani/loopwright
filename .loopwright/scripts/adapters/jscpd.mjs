@@ -10,7 +10,7 @@ import { existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { writeReport, REPORT_FILES } from '../lib/shell.mjs';
-import { LOOPWRIGHT_DIR, REPORTS_DIR } from '../lib/paths.mjs';
+import { LOOPWRIGHT_DIR } from '../lib/paths.mjs';
 
 const EXTENSION_FORMATS = {
   '.ts': 'typescript',
@@ -23,16 +23,21 @@ const EXTENSION_FORMATS = {
 /**
  * Builds the jscpd CLI args from config.sources: the format list is derived
  * from the configured source extensions (deduped, comma-joined), and the
- * source roots are passed as trailing positional args.
+ * source roots are passed as trailing positional args. `--output` is derived
+ * from `reportsDir` (the caller's ctx.reportsDir) rather than the fixed
+ * REPORTS_DIR constant, so a caller that points reportsDir at a scratch
+ * directory (e.g. a test) never writes into the real, committed reports
+ * directory — the report jscpd writes and the report `collect()` checks for
+ * afterward must always agree on where that is.
  */
-export function jscpdArgs(config) {
+export function jscpdArgs(config, reportsDir) {
   const { roots, extensions } = config.sources;
   const formats = [...new Set(extensions.map((ext) => EXTENSION_FORMATS[ext]).filter(Boolean))].join(',');
   return [
     '--reporters',
     'json',
     '--output',
-    resolve(REPORTS_DIR, 'jscpd'),
+    resolve(reportsDir, 'jscpd'),
     '--min-lines',
     '5',
     '--min-tokens',
@@ -56,7 +61,7 @@ export default {
   collect(ctx) {
     const { cwd, reportsDir, config } = ctx;
     const bin = resolve(LOOPWRIGHT_DIR, 'node_modules/.bin/jscpd');
-    const args = jscpdArgs(config);
+    const args = jscpdArgs(config, reportsDir);
     const result = spawnSync(bin, args, { cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
     if (result.stdout?.trim()) console.log(result.stdout.trim());
     if (result.stderr?.trim()) console.log(result.stderr.trim());

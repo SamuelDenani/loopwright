@@ -8,7 +8,7 @@ import biome from '../scripts/adapters/biome.mjs';
 import vitestAdapter from '../scripts/adapters/vitest.mjs';
 import jest from '../scripts/adapters/jest.mjs';
 import npmAudit from '../scripts/adapters/npm-audit.mjs';
-import jscpd, { jscpdArgs } from '../scripts/adapters/jscpd.mjs';
+import jscpd from '../scripts/adapters/jscpd.mjs';
 import { REPORTS_DIR, LOOPWRIGHT_DIR } from '../scripts/lib/paths.mjs';
 
 let dir;
@@ -168,28 +168,36 @@ describe('npm-audit adapter collect()', () => {
 });
 
 describe('jscpd adapter', () => {
-  it('derives formats and passes source roots positionally (already covered by jscpdArgs unit test)', () => {
-    expect(jscpdArgs({ sources: { roots: ['a'], extensions: ['.mjs'] } })).toContain('a');
-  });
-
   it('runs the vendored jscpd binary and writes a report even on a source tree with no clones', () => {
-    if (!existsSync(resolve(LOOPWRIGHT_DIR, 'node_modules/.bin/jscpd'))) return; // not vendored in this checkout
+    // Assert the prerequisite loudly instead of silently skipping: a missing
+    // vendored binary must fail this test, not pass it vacuously.
+    const bin = resolve(LOOPWRIGHT_DIR, 'node_modules/.bin/jscpd');
+    expect(existsSync(bin)).toBe(true);
+
     const srcDir = join(dir, 'src');
     mkdirSync(srcDir, { recursive: true });
     writeFileSync(join(srcDir, 'a.mjs'), 'export const a = 1;\n');
-    // Real usage (run-report.mjs) always passes reportsDir === REPORTS_DIR — the
-    // adapter's --output target is hardcoded to REPORTS_DIR/jscpd regardless of
-    // ctx.reportsDir, so the existsSync fallback check only lines up when the
-    // two agree, same as in production.
+
+    // Snapshot the real report before, so we can prove collect() below never
+    // touched it — real prior runs of `run-report.mjs --all` may well have
+    // already left a file there, so "does it exist" isn't a safe assertion;
+    // "is it byte-identical to before" is.
+    const realReportPath = resolve(REPORTS_DIR, 'jscpd/jscpd-report.json');
+    const before = existsSync(realReportPath) ? readFileSync(realReportPath, 'utf8') : null;
+
+    // reportsDir is a scratch tmpdir, never the real REPORTS_DIR — jscpd.mjs
+    // derives its --output from ctx.reportsDir, so this never touches (or
+    // forges) the real, gitignored .loopwright/reports/jscpd that the actual
+    // gate reads.
+    const reportsDir = join(dir, 'reports');
     jscpd.collect({
       cwd: dir,
-      reportsDir: REPORTS_DIR,
+      reportsDir,
       config: { sources: { roots: [srcDir], extensions: ['.mjs'] } },
     });
-    // Intentionally not cleaned up: this writes into the real, gitignored
-    // .loopwright/reports/jscpd (see comment above on why reportsDir must
-    // equal REPORTS_DIR here). A real `run-report.mjs --all` regenerates it
-    // on the next run either way.
-    expect(existsSync(resolve(REPORTS_DIR, 'jscpd/jscpd-report.json'))).toBe(true);
+    expect(existsSync(resolve(reportsDir, 'jscpd/jscpd-report.json'))).toBe(true);
+
+    const after = existsSync(realReportPath) ? readFileSync(realReportPath, 'utf8') : null;
+    expect(after).toBe(before);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { parseTscOutput } from '../scripts/adapters/tsc.mjs';
 import { parseEslintJson } from '../scripts/adapters/eslint.mjs';
 import { summarizeTestResults } from '../scripts/adapters/vitest.mjs';
@@ -84,9 +84,10 @@ describe('eslint adapter — parse edge cases', () => {
 });
 
 describe('jscpd adapter', () => {
-  it('derives formats from source extensions', () => {
-    const args = jscpdArgs({ sources: { roots: ['src', 'app'], extensions: ['.ts', '.tsx'] } });
+  it('derives formats from source extensions and --output from the given reportsDir', () => {
+    const args = jscpdArgs({ sources: { roots: ['src', 'app'], extensions: ['.ts', '.tsx'] } }, '/scratch/reports');
     expect(args.join(' ')).toContain('--format typescript,tsx');
     expect(args.slice(-2)).toEqual(['src', 'app']);
+    expect(args[args.indexOf('--output') + 1]).toBe(resolve('/scratch/reports', 'jscpd'));
   });
 });
