@@ -41,10 +41,15 @@ echo "integration: $copied file(s) copied, $skipped left untouched"
 
 # --- host touches ------------------------------------------------------------
 touch .gitignore
-grep -qx '\.loopwright/reports/' .gitignore || printf '.loopwright/reports/\n.loopwright/node_modules/\n' >> .gitignore
+if [ -s .gitignore ] && [ "$(tail -c1 .gitignore)" != "" ]; then
+  echo >> .gitignore
+fi
+grep -qx '\.loopwright/reports/' .gitignore || echo '.loopwright/reports/' >> .gitignore
+grep -qx '\.loopwright/node_modules/' .gitignore || echo '.loopwright/node_modules/' >> .gitignore
 start='<!-- loopwright:start -->'; end='<!-- loopwright:end -->'
 touch CLAUDE.md
 if grep -qF "$start" CLAUDE.md; then
+  grep -qF "$end" CLAUDE.md || { echo "install.sh: CLAUDE.md has a loopwright:start marker but no end marker — fix the file manually"; exit 1; }
   awk -v s="$start" -v e="$end" -v f=".loopwright/claude-md-section.md" '
     $0==s {print; while ((getline line < f) > 0) print line; skip=1; next}
     $0==e {print; skip=0; next}

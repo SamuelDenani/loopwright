@@ -17,11 +17,18 @@ echo '{"compilerOptions":{"strict":true}}' > tsconfig.json
 echo '{}' > package-lock.json
 echo 'export const answer: number = 42;' > app/answer.ts
 
+# Pre-existing .gitignore with NO trailing newline — install.sh must not
+# concatenate its appended lines onto the last existing line.
+printf 'node_modules/' > .gitignore
+
 LOOPWRIGHT_SOURCE="$SOURCE" bash "$SOURCE/install.sh"
 
 [ -f .loopwright/config.json ] || { echo "FAIL: no config.json generated"; exit 1; }
 grep -q '"adapter": "unconfigured"' .loopwright/config.json || { echo "FAIL: tests should be unconfigured"; exit 1; }
 grep -q 'loopwright:start' CLAUDE.md || { echo "FAIL: CLAUDE.md section missing"; exit 1; }
+[ "$(grep -cx '\.loopwright/reports/' .gitignore)" = "1" ] || { echo "FAIL: gitignore reports line missing/duplicated"; exit 1; }
+[ "$(grep -cx '\.loopwright/node_modules/' .gitignore)" = "1" ] || { echo "FAIL: gitignore node_modules line missing/duplicated"; exit 1; }
+[ "$(grep -c 'node_modules/.loopwright' .gitignore)" = "0" ] || { echo "FAIL: gitignore lines concatenated (no trailing newline bug)"; exit 1; }
 
 node .loopwright/scripts/run-report.mjs --all
 node .loopwright/scripts/quality-gate.mjs || true   # verdict may be block; we assert it RAN
