@@ -1,0 +1,23 @@
+{
+  "numTotalTests": 3,
+  "numPassedTests": 2,
+  "numFailedTests": 1,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "numFailedTestSuites": 1,
+  "testResults": [
+    {
+      "name": "/repo/tests/example.test.mjs",
+      "assertionResults": [
+        { "status": "passed", "fullName": "does a thing", "title": "does a thing" },
+        { "status": "passed", "fullName": "does another thing", "title": "does another thing" },
+        {
+          "status": "failed",
+          "fullName": "adds numbers correctly",
+          "title": "adds numbers correctly",
+          "failureMessages": ["AssertionError: expected 3 to be 4\n    at tests/example.test.mjs:10:5"]
+        }
+      ]
+    }
+  ]
+}

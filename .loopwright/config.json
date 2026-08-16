@@ -1,0 +1,187 @@
+{
+  "sources": { "roots": [".loopwright/scripts", ".loopwright/tests"], "extensions": [".mjs"], "ignore": ["**/fixtures/**"] },
+
+  "collectors": {
+    "typecheck":   { "adapter": "unconfigured" },
+    "lint":        { "adapter": "eslint" },
+    "tests":       { "adapter": "vitest", "command": "npx vitest run --coverage", "cwd": ".loopwright" },
+    "audit":       { "adapter": "npm-audit" },
+    "duplication": { "adapter": "jscpd" }
+  },
+
+  "//audit": "No prod/dev split: a PR is either deployable or it is not. The escape valve is this list, and every entry must carry an `expires` date — an expired suppression stops suppressing and the advisory blocks again. Match by `advisory` (GHSA id or npm source id) and/or `package`.",
+  "audit": {
+    "ignore": []
+  },
+
+  "//limits": "Per-file and per-function shape limits. `block` is a hard ceiling for new or worsened code; `warn` is advisory. Code that already exceeded a limit at baseline time is grandfathered as debt and only blocks if it gets worse.",
+  "limits": {
+    "fileCodeLines": { "warn": 150, "block": 300 },
+    "functionLines": { "warn": 45, "block": 80 },
+    "complexity": { "warn": 10, "block": 15 },
+    "maxDepth": { "warn": 4, "block": 6 },
+    "params": { "warn": 5, "block": 7 }
+  },
+
+  "//metrics": "direction: which way is better. tolerance: drift allowed against the baseline before it counts as a regression. hardMax/hardMin: absolute limits, independent of the baseline. onRegression: what a regression against the baseline does.",
+  "metrics": {
+    "tests.failed": {
+      "label": "Failing tests",
+      "direction": "lower-better",
+      "hardMax": 0,
+      "tolerance": 0,
+      "onRegression": "block"
+    },
+    "tests.suitesFailed": {
+      "label": "Failing test suites",
+      "direction": "lower-better",
+      "hardMax": 0,
+      "tolerance": 0,
+      "onRegression": "block"
+    },
+    "typecheck.errors": {
+      "label": "TypeScript errors",
+      "direction": "lower-better",
+      "hardMax": 0,
+      "tolerance": 0,
+      "onRegression": "block"
+    },
+    "lint.errors": {
+      "label": "ESLint errors",
+      "direction": "lower-better",
+      "hardMax": 0,
+      "tolerance": 0,
+      "onRegression": "block"
+    },
+    "lint.warnings": {
+      "label": "ESLint warnings",
+      "direction": "lower-better",
+      "tolerance": 0,
+      "onRegression": "block"
+    },
+
+    "audit.critical": {
+      "label": "Critical advisories",
+      "direction": "lower-better",
+      "hardMax": 0,
+      "tolerance": 0,
+      "onRegression": "block"
+    },
+    "audit.high": {
+      "label": "High advisories",
+      "direction": "lower-better",
+      "tolerance": 0,
+      "onRegression": "warn"
+    },
+    "audit.suppressed": {
+      "label": "Suppressed advisories",
+      "direction": "lower-better",
+      "tolerance": 0,
+      "onRegression": "warn"
+    },
+
+    "coverage.lines": {
+      "label": "Line coverage",
+      "unit": "%",
+      "direction": "higher-better",
+      "hardMin": 80,
+      "tolerance": 0.5,
+      "onRegression": "block"
+    },
+    "coverage.branches": {
+      "label": "Branch coverage",
+      "unit": "%",
+      "direction": "higher-better",
+      "hardMin": 75,
+      "tolerance": 0.5,
+      "onRegression": "block"
+    },
+    "coverage.functions": {
+      "label": "Function coverage",
+      "unit": "%",
+      "direction": "higher-better",
+      "hardMin": 80,
+      "tolerance": 0.5,
+      "onRegression": "warn"
+    },
+    "coverage.statements": {
+      "label": "Statement coverage",
+      "unit": "%",
+      "direction": "higher-better",
+      "tolerance": 0.5,
+      "onRegression": "warn"
+    },
+
+    "duplication.percentage": {
+      "label": "Duplicated code",
+      "unit": "%",
+      "direction": "lower-better",
+      "hardMax": 5,
+      "tolerance": 0.2,
+      "onRegression": "block"
+    },
+
+    "complexity.max": {
+      "label": "Highest function complexity",
+      "direction": "lower-better",
+      "tolerance": 0,
+      "onRegression": "warn"
+    },
+    "complexity.average": {
+      "label": "Average function complexity",
+      "direction": "lower-better",
+      "tolerance": 0.3,
+      "onRegression": "warn"
+    },
+    "size.oversizedFiles": {
+      "label": "Oversized files",
+      "direction": "lower-better",
+      "tolerance": 0,
+      "onRegression": "warn"
+    },
+
+    "integrity.skippedTests": {
+      "label": "Skipped tests",
+      "direction": "lower-better",
+      "tolerance": 0,
+      "onRegression": "block"
+    },
+    "integrity.focusedTests": {
+      "label": "Focused tests (.only)",
+      "direction": "lower-better",
+      "hardMax": 0,
+      "tolerance": 0,
+      "onRegression": "block"
+    },
+    "integrity.assertionlessTests": {
+      "label": "Tests with no assertion",
+      "direction": "lower-better",
+      "tolerance": 0,
+      "onRegression": "block"
+    },
+    "integrity.coverageIgnores": {
+      "label": "Coverage-ignore hints",
+      "direction": "lower-better",
+      "tolerance": 0,
+      "onRegression": "block"
+    },
+    "integrity.typeSuppressions": {
+      "label": "Type suppressions (@ts-ignore etc.)",
+      "direction": "lower-better",
+      "tolerance": 0,
+      "onRegression": "block"
+    },
+    "integrity.lintSuppressions": {
+      "label": "Inline eslint-disable",
+      "direction": "lower-better",
+      "tolerance": 0,
+      "onRegression": "warn"
+    },
+    "integrity.emptyCatches": {
+      "label": "Empty catch blocks",
+      "direction": "lower-better",
+      "tolerance": 0,
+      "onRegression": "block"
+    }
+  }
+}

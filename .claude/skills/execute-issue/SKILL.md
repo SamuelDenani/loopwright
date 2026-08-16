@@ -181,15 +181,19 @@ For each plan step, in order:
 
 ## 7. Gate locally, then final review
 
-Run `npm run quality`. Iterate with coder agents until the gate is green —
-`reports/quality-gate.json` lists every blocker with `file:line` evidence.
+Run `node .loopwright/scripts/run-report.mjs --all && node .loopwright/scripts/quality-gate.mjs`.
+Iterate with coder agents until the gate is green —
+`.loopwright/reports/quality-gate.json` lists every blocker with `file:line`
+evidence.
 
 Then dispatch the **reviewer** agent (fresh, opus) on the whole branch:
 `git diff <base>...<branch>` as a file, the spec path, the issue number, and
 the ledger's deferred-minor and parked lines so it can triage which of those
 must be fixed before the PR. If it returns findings: ONE fix dispatch with
 the complete list (not one fixer per finding), one scoped re-review,
-adjudicate residuals. Re-run `npm run quality` after fixes.
+adjudicate residuals. Re-run
+`node .loopwright/scripts/run-report.mjs --all && node .loopwright/scripts/quality-gate.mjs`
+after fixes.
 
 ## 8. Open the draft PR
 

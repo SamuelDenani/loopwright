@@ -1,0 +1,33 @@
+{
+  "summary": {
+    "errors": 2,
+    "warnings": 1
+  },
+  "diagnostics": [
+    {
+      "category": "lint/style/useConst",
+      "severity": "error",
+      "description": "This variable is never reassigned. Use 'const' instead."
+    },
+    {
+      "category": "lint/complexity/noExcessiveCognitiveComplexity",
+      "severity": "error",
+      "description": "The code is too complex.",
+      "location": {
+        "path": {
+          "file": "src/main.js"
+        }
+      }
+    },
+    {
+      "category": "lint/style/noConsoleLog",
+      "severity": "warning",
+      "description": "Avoid using console.log.",
+      "location": {
+        "path": {
+          "file": "src/util.js"
+        }
+      }
+    }
+  ]
+}

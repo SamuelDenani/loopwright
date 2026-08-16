@@ -28,7 +28,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          # The review's git-history agent reads blame and prior commits on the
+          # touched files; a shallow clone leaves it with nothing to read.
+          fetch-depth: 0
 
       - name: Run Claude Code Review
         id: claude-review
@@ -37,12 +39,25 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
-          prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          # Without this the review is invisible when it finds nothing: the
-          # job goes green, no comment lands, and "reviewed clean" cannot be
-          # told apart from "never ran". The sticky comment always carries
-          # the review's summary, findings or not.
-          use_sticky_comment: true
+          # The review skill drives everything through `gh` — it reads the PR
+          # with `gh pr view`/`gh pr diff` and posts its verdict with
+          # `gh pr comment`. The action disables Bash by default, so without
+          # this allowlist every one of those calls is denied and the job goes
+          # green having done nothing. The skill's own `allowed-tools` frontmatter
+          # does not substitute for this.
+          claude_args: |
+            --allowedTools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr list:*),Bash(gh pr comment:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh search:*),Bash(git log:*),Bash(git blame:*),Bash(git show:*),Bash(git diff:*)"
+          # The skill posts its own comment and deliberately stays silent when it
+          # finds nothing (its steps 1 and 6 both say "do not proceed"). That makes
+          # "reviewed clean" indistinguishable from "never ran" — which is exactly
+          # the failure this workflow hit. Force the clean-run comment instead.
+          prompt: |
+            /code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}
+
+            Always finish by posting a comment on the pull request, even when no
+            issues clear the confidence bar — in that case post the skill's
+            "No issues found" form. Do not skip the review on the grounds that the
+            pull request looks automated, simple, or already reviewed.
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
 

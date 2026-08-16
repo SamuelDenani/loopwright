@@ -1,0 +1,35 @@
+{
+  "numTotalTests": 5,
+  "numPassedTests": 3,
+  "numFailedTests": 2,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "numFailedTestSuites": 1,
+  "testResults": [
+    {
+      "name": "/repo/tests/math.test.js",
+      "assertionResults": [
+        { "status": "passed", "fullName": "can add", "title": "can add" },
+        { "status": "passed", "fullName": "can subtract", "title": "can subtract" },
+        {
+          "status": "failed",
+          "fullName": "can multiply",
+          "title": "can multiply",
+          "failureMessages": ["AssertionError: expected 6 to be 8\n    at tests/math.test.js:15:5"]
+        }
+      ]
+    },
+    {
+      "name": "/repo/tests/string.test.js",
+      "assertionResults": [
+        { "status": "passed", "fullName": "can uppercase", "title": "can uppercase" },
+        {
+          "status": "failed",
+          "fullName": "can lowercase",
+          "title": "can lowercase",
+          "failureMessages": ["AssertionError: expected 'HELLO' to be 'hello'\n    at tests/string.test.js:8:5"]
+        }
+      ]
+    }
+  ]
+}

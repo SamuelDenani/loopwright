@@ -1,0 +1,21 @@
+{
+  "auditReportVersion": 2,
+  "vulnerabilities": {
+    "left-pad": {
+      "name": "left-pad",
+      "severity": "high",
+      "via": [
+        {
+          "source": 1234,
+          "name": "left-pad",
+          "title": "Prototype Pollution in left-pad",
+          "url": "https://github.com/advisories/GHSA-xxxx-yyyy-zzzz"
+        }
+      ],
+      "fixAvailable": true
+    }
+  },
+  "metadata": {
+    "vulnerabilities": { "info": 0, "low": 0, "moderate": 0, "high": 1, "critical": 0, "total": 1 }
+  }
+}

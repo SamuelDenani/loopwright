@@ -1,0 +1,23 @@
+[
+  {
+    "filePath": "/repo/src/example.js",
+    "errorCount": 1,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "no-unused-vars",
+        "severity": 2,
+        "line": 5,
+        "column": 3,
+        "message": "'x' is defined but never used."
+      },
+      {
+        "ruleId": "no-console",
+        "severity": 1,
+        "line": 10,
+        "column": 1,
+        "message": "Unexpected console statement."
+      }
+    ]
+  }
+]
