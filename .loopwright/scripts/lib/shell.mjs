@@ -23,9 +23,18 @@ export const REPORT_FILES = {
   duplication: ['jscpd/jscpd-report.json'],
 };
 
-export function runShell(command, cwd) {
-  const result = spawnSync(command, { shell: true, cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-  return { status: result.status ?? 1, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
+export function runShell(command, cwd, { maxBuffer = 64 * 1024 * 1024 } = {}) {
+  const result = spawnSync(command, { shell: true, cwd, encoding: 'utf8', maxBuffer });
+  // spawnSync reports a failure to run the command at all — the shell missing,
+  // or output overflowing maxBuffer — on `error` rather than through the exit
+  // status. Dropping it would leave the caller with a bare status 1 and empty
+  // stderr, which is indistinguishable from the command itself failing quietly.
+  const stderr = result.stderr ?? '';
+  return {
+    status: result.status ?? 1,
+    stdout: result.stdout ?? '',
+    stderr: result.error ? `${stderr}${result.error.message}\n` : stderr,
+  };
 }
 
 export function writeReport(reportsDir, relativePath, payload) {

@@ -21,6 +21,14 @@ describe('runShell', () => {
     const result = runShell('kill -9 $$', process.cwd());
     expect(result.status).toBe(1);
   });
+
+  it('surfaces a spawn error in stderr instead of dropping it', () => {
+    // Output overflowing maxBuffer still exits 0, so the truncation is invisible
+    // in the status — the error is the only signal that stdout is incomplete.
+    const result = runShell('echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', process.cwd(), { maxBuffer: 4 });
+    expect(result.status).toBe(0);
+    expect(result.stderr).toMatch(/ENOBUFS|maxBuffer/i);
+  });
 });
 
 describe('writeReport', () => {
