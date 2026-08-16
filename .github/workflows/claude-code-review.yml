@@ -45,8 +45,13 @@ jobs:
           # this allowlist every one of those calls is denied and the job goes
           # green having done nothing. The skill's own `allowed-tools` frontmatter
           # does not substitute for this.
+          #
+          # --allowedTools REPLACES the default tool set rather than extending
+          # it, so everything the skill touches has to be named here. Task is
+          # load-bearing: the skill fans out to Haiku and Sonnet subagents from
+          # step 1 onward, and without it the run dies on the first tool call.
           claude_args: |
-            --allowedTools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr list:*),Bash(gh pr comment:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh search:*),Bash(git log:*),Bash(git blame:*),Bash(git show:*),Bash(git diff:*)"
+            --allowedTools "Task,TodoWrite,Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr list:*),Bash(gh pr comment:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh search:*),Bash(gh api:*),Bash(git log:*),Bash(git blame:*),Bash(git show:*),Bash(git diff:*)"
           # The skill posts its own comment and deliberately stays silent when it
           # finds nothing (its steps 1 and 6 both say "do not proceed"). That makes
           # "reviewed clean" indistinguishable from "never ran" — which is exactly
