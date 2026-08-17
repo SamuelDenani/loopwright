@@ -11,7 +11,11 @@ fail() { echo "pre-commit: $1" >&2; exit 1; }
 
 # --- gated shortcuts in staged additions -------------------------------------
 # Each of these blocks the PR in CI; rejecting them here saves the round-trip.
-added=$(git diff --cached -U0 -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' | grep '^+[^+]' || true)
+# Fixtures are excluded to mirror `sources.ignore` in .loopwright/config.json:
+# they exist to give the gate's detectors something to detect, so a fixture
+# carrying a .skip or an @ts-ignore is the point, not a defect. Without this,
+# merging main into a branch trips the hook on files nobody edited.
+added=$(git diff --cached -U0 -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' ':(exclude)**/fixtures/**' | grep '^+[^+]' || true)
 if [ -n "$added" ]; then
   declare -a patterns=(
     '\.only *\('            'a focused test (.only)'
