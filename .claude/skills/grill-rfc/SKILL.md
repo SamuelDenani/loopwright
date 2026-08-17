@@ -215,19 +215,82 @@ tree, with the reasoning that settled contested branches) · **Scope** /
 to be created, with dependency edges) · **Open questions** (the explicitly
 deferred branches).
 
-## 4. Break into task sub-issues
+## 4. Draft the sub-issues
 
-Propose the breakdown to the user first — titles, one-line goals, and the
-dependency edges — and get approval before creating anything. Each task must
-be one PR's worth of work with testable acceptance criteria.
+Mark `Draft sub-issues` in_progress. Drafts are **files**, not issues —
+`draft-<slug>.md` in a scratch directory. Nothing reaches GitHub until the
+user approves: splitting or merging real issues leaves orphaned
+relationships, while splitting a file is free.
 
-For each approved task:
+Draft them **granular from the start**. The review rounds below are a safety
+net, not the mechanism — the cheapest way to minimise loops is to not draft a
+fat sub-issue in the first place. Where the ledger has seams, they are the
+split lines.
 
-```bash
-gh issue create --title "Task: <title>" --label task --body-file task-N.md
+A draft is correctly sized when all three hold:
+
+1. **One seam** — it crosses at most one boundary from the ledger. If the
+   ledger is empty: it changes exactly one observable behavior, and every
+   acceptance criterion describes that one behavior.
+2. **Co-true criteria** — three to seven acceptance checkboxes, all true
+   together or all false together.
+3. **Vertical slice** — test plus implementation plus wiring, shippable
+   alone. Never a horizontal layer such as "define all the types".
+
+Draft body: goal, acceptance criteria (checkboxes), pointers into the RFC,
+and which drafts it is blocked by.
+
+Then **log the whole set to the user** — titles, one-line goals and the
+dependency edges. This is visibility, not an approval gate: do not wait.
+
+## 4b. Review the sub-issues
+
+Mark `Review sub-issues` in_progress. Reviewers review only. You adjudicate
+every finding — apply, reject with a reason, or park — and you do all the
+rewriting.
+
+**First the set.** Dispatch the **set-reviewer** agent (its own native task)
+with the refined RFC, the ledger and every draft path. It judges coverage,
+overlap, minimality and edges. Adjudicate, then rewrite the drafts.
+
+Set findings change *which drafts exist*, which is why this runs first: in
+parallel, every per-draft review of a doomed draft is wasted and the draft the
+set-reviewer invents gets no review at all.
+
+**Then the drafts.** Dispatch one **sub-issue-reviewer** per draft, in
+parallel, one native task each (`Review: <title>`). Each gets exactly one
+draft path plus the RFC and the ledger — never the other drafts. Adjudicate,
+then rewrite.
+
+**Converge.** If the draft round produced any split or merge, the set changed:
+run the set-reviewer once more on the revised set, and give each newly-born
+draft its one sub-issue review. Cap at **one** re-entry; then adjudicate the
+residuals yourself and carry them into the approval message.
+
+After each round give the user one line — never the raw verdicts:
+
+```
+set-reviewer: 2 gaps, 1 overlap → added draft-migrate-jobs, merged draft-b + draft-c
+sub-issue-reviewers (6): 1 split → draft-api split into draft-api-read, draft-api-write
+boundary-reviewer: no change
 ```
 
-Task body: goal, acceptance criteria (checkboxes), pointers into the RFC.
+## 4c. Approve, then create
+
+Present the final set for approval — titles, one-line goals, dependency edges,
+and any residual findings you parked.
+
+If the user rejects it, treat their objection as a set-level finding: apply
+it, re-run the set-reviewer once on the revised set, sub-issue-review only
+newly-born drafts, and present again. A user objection is never parked and is
+not subject to the re-entry cap.
+
+On approval, mark `Create sub-issues` in_progress and create each one:
+
+```bash
+gh issue create --title "Task: <title>" --label task --body-file draft-<slug>.md
+```
+
 Then link relationships via GraphQL (write queries to a temp file and use
 `-F query=@file` — inline quoting breaks in fish):
 
