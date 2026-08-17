@@ -19,6 +19,30 @@ gh issue view <N> --json number,title,body,labels,url
 Abort unless the issue has the `rfc` label. The deliberation in the body
 seeds the design tree below — its central decision is the root.
 
+Then create the run's **native task spine** (TaskCreate), in this order:
+`Grill` · `Reverse grill` · `Architect` · `Rewrite RFC body` ·
+`Draft sub-issues` · `Review sub-issues` · `Create sub-issues`. No dependency
+edges — the spine is sequential and reads that way by id. It exists so the
+user can see the shape of the run before the first question.
+
+Keep it live for the rest of the session. A phase goes in_progress when it
+starts and completed when its output is **adjudicated**, not when an agent
+replies — otherwise the list goes green while the work is still open. A phase
+that legitimately did nothing still completes, carrying the reason in its
+label ("no boundaries — 7 decisions internal"); a phase vanishing mid-run
+reads as a bug.
+
+**One task per agent dispatch, with one exception** — the fact-finding
+sub-agents §2 dispatches during the grill. Those are per-round and unbounded
+like the rounds themselves, so they fold into the `Grill` task's label rather
+than spawning their own. The review fan-outs (`boundary-reviewer` in §2c,
+`set-reviewer` and the per-draft `sub-issue-reviewer`s in §4b) each get their
+own native task — those are bounded, and they're the stretches where the user
+is genuinely in the dark, unlike the grill itself where the user is being
+asked questions. So `Grill` and `Architect` carry their progress in the task
+label ("Grilling: round 3, 4 questions open") rather than spawning a task per
+round: a task per round is unbounded and would bury the spine.
+
 ## 2. Grill
 
 Interview the user relentlessly until you reach a shared understanding. Map
@@ -86,7 +110,132 @@ The session is done when both directions hold: your frontier is empty AND
 the user's answers match the design. Do not move to step 3 until the user
 confirms you have reached a shared understanding.
 
+## 2c. Architect the boundaries
+
+Only once both directions hold. Mark `Architect` in_progress.
+
+### Extract the ledger
+
+Walk the settled design tree. A decision earns a place only if it creates or
+changes something **two parties must agree on**:
+
+- a new or changed module, service, or process
+- a public interface or API shape
+- a data contract or schema
+- ownership of persisted state
+- a deployment or trust boundary
+
+Algorithm choice, library choice, naming and file layout never qualify. When a
+decision is arguably internal, it **is** internal — this phase is biased
+toward producing output, and the rule exists to counteract that.
+
+Group qualifying decisions **by seam**, not by decision: several decisions
+touching `app <-> Redis` collapse into one boundary. That grouping is what
+caps the diagram count.
+
+```
+BOUNDARIES
+  app <-> Redis    — decisions: workers read from Redis; Redis holds job state
+  client <-> API   — decisions: expose GET /jobs/:id
+
+EXCLUDED (internal)
+  use a worker pool               — no party outside the module observes it
+  retry with exponential backoff  — implementation of an existing contract
+```
+
+The EXCLUDED list is **mandatory and reasoned**. It turns a silent judgment
+into an explicit claim the user can scan in seconds.
+
+**Zero boundaries is a legitimate outcome** — but an all-empty BOUNDARIES
+list is still an extraction, and declaring everything internal is the
+cheapest way to skip this phase. Review it anyway (next step). Only once the
+reviewer confirms: report it plainly, complete `Architect` with the reason in
+its label ("no boundaries — 7 decisions internal"), and go to §3.
+
+### Review the extraction
+
+Dispatch the **boundary-reviewer** agent (its own native task) with the
+settled design tree and the ledger. Adjudicate every finding yourself — apply,
+reject with a reason, or park. It reviews; you rewrite.
+
+Give the user one changelog line for this round — `boundary-reviewer: no
+change`, or what you changed and why — never the raw verdict. That line is
+the standing evidence for whether this reviewer earns its place.
+
+Dispatch it even when BOUNDARIES is empty. A wrongly-empty ledger is exactly
+what this reviewer is best placed to catch — a missed seam surfaces as an
+EXCLUDED entry that meets the test.
+
+Running it before the drawing means a boundary that should not exist is never
+drawn and never shown.
+
+### Draw
+
+One diagram per boundary, type chosen to show what was decided:
+
+| Type | Use when |
+|---|---|
+| `flowchart` | structural seam — who talks to what, what crosses |
+| `sequenceDiagram` | the decision was about ordering or handshake across the seam |
+| `erDiagram` | the boundary is a data contract |
+
+Each diagram carries two to four lines: what crosses the seam, who owns what,
+and which settled decisions it encodes.
+
+**Stay inside a conservative mermaid subset.** No validator exists here, and
+invalid syntax renders as a broken code block on GitHub at exactly the moment
+the user is meant to be approving:
+
+- alphanumeric node ids only
+- no `%%{init}%%` directives
+- no `classDef`, `style` or `click`
+- no nested subgraphs
+- quote any label containing punctuation
+
+### Post and gate
+
+All diagrams go in **one** comment on the RFC, so revisions edit it in place
+instead of stacking. Write `architecture.md` in the same scratch directory as
+the drafts, and never commit it to the repo:
+
+```bash
+gh issue comment <N> --body-file architecture.md              # first post
+gh issue comment <N> --edit-last --body-file architecture.md  # revisions
+```
+
+`--edit-last` targets your most recent comment. If the user has commented
+since, capture the id from the URL the first post printed
+(`...#issuecomment-<id>`) and patch it directly instead:
+
+```bash
+gh api --method PATCH /repos/<owner>/<repo>/issues/comments/<id> -F body=@architecture.md
+```
+
+Give the user the ledger and the comment URL, and ask for approval.
+
+Two gates:
+
+- **Theirs.** Approve, or say what is wrong. A correction that reveals a
+  decision which was never actually settled reopens that branch on the §2
+  frontier — go back and grill it.
+- **Yours.** If a seam cannot be drawn without inventing a fact nobody
+  decided, that is a frontier question. Stop and ask; never guess.
+
+On approval, complete `Architect`. The phase's output is the approved
+diagrams, so it closes here — not back when the boundary-reviewer's findings
+were adjudicated, which is mid-phase with the drawing and both gates still
+ahead.
+
+The architecture stays in the comment and **never enters the RFC body**. The
+planner in `/execute-issue` reads the body via `gh issue view`, which does not
+return comments — so a diagram that drifts cannot become the input a later
+planner plans from. The architecture is scaffolding: its consumers are the
+sub-issue phase, which needs the seams, and the user's eyes. Its job ends when
+the sub-issues are created.
+
 ## 3. Rewrite the issue
+
+Mark `Rewrite RFC body` in_progress.
 
 First preserve the original deliberation (audit trail), then replace the
 body:
@@ -102,19 +251,92 @@ tree, with the reasoning that settled contested branches) · **Scope** /
 to be created, with dependency edges) · **Open questions** (the explicitly
 deferred branches).
 
-## 4. Break into task sub-issues
+## 4. Draft the sub-issues
 
-Propose the breakdown to the user first — titles, one-line goals, and the
-dependency edges — and get approval before creating anything. Each task must
-be one PR's worth of work with testable acceptance criteria.
+Mark `Draft sub-issues` in_progress. Drafts are **files**, not issues —
+`draft-<slug>.md` in a scratch directory. Nothing reaches GitHub until the
+user approves: splitting or merging real issues leaves orphaned
+relationships, while splitting a file is free.
 
-For each approved task:
+Draft them **granular from the start**. The review rounds below are a safety
+net, not the mechanism — the cheapest way to minimise loops is to not draft a
+fat sub-issue in the first place. Where the ledger has seams, they are the
+split lines.
 
-```bash
-gh issue create --title "Task: <title>" --label task --body-file task-N.md
+A draft is correctly sized when all three hold:
+
+1. **One seam** — it crosses at most one boundary from the ledger. If the
+   ledger is empty: it changes exactly one observable behavior, and every
+   acceptance criterion describes that one behavior.
+2. **Co-true criteria** — three to seven acceptance checkboxes, all true
+   together or all false together.
+3. **Vertical slice** — test plus implementation plus wiring, shippable
+   alone. Never a horizontal layer such as "define all the types".
+
+Draft body: goal, acceptance criteria (checkboxes), pointers into the RFC,
+and which drafts it is blocked by.
+
+Then **log the whole set to the user** — titles, one-line goals and the
+dependency edges. This is visibility, not an approval gate: do not wait.
+
+## 4b. Review the sub-issues
+
+Mark `Review sub-issues` in_progress. Reviewers review only. You adjudicate
+every finding — apply, reject with a reason, or park — and you do all the
+rewriting.
+
+**First the set.** Dispatch the **set-reviewer** agent (its own native task)
+with the refined RFC, the ledger and every draft path. It judges coverage,
+overlap, minimality and edges. Adjudicate, then rewrite the drafts.
+
+Set findings change *which drafts exist*, which is why this runs first: in
+parallel, every per-draft review of a doomed draft is wasted and the draft the
+set-reviewer invents gets no review at all.
+
+**Then the drafts.** Dispatch one **sub-issue-reviewer** per draft, in
+parallel, one native task each (`Review: <title>`). Each gets exactly one
+draft path plus the RFC and the ledger — never the other drafts. Adjudicate,
+then rewrite.
+
+**Converge.** If the draft round produced any split or merge, the set changed:
+run the set-reviewer once more on the revised set, and give each newly-born
+draft its one sub-issue review. Cap at **one** re-entry; then adjudicate the
+residuals yourself and carry them into the approval message.
+
+Suffix the re-entry round's native tasks `(round 2)` so they do not collide
+with the first round's by name.
+
+After each round give the user one line — never the raw verdicts:
+
+```
+set-reviewer: 2 gaps, 1 overlap → added draft-migrate-jobs, merged draft-b + draft-c
+sub-issue-reviewers (6): 1 split → draft-api split into draft-api-read, draft-api-write
+boundary-reviewer: no change
 ```
 
-Task body: goal, acceptance criteria (checkboxes), pointers into the RFC.
+## 4c. Approve, then create
+
+Present the final set for approval — titles, one-line goals, dependency edges,
+and any residual findings you parked.
+
+If the user rejects it, treat their objection as a set-level finding: apply
+it, re-run the set-reviewer once on the revised set, sub-issue-review only
+newly-born drafts, and present again. A user objection is never parked and is
+not subject to the re-entry cap.
+
+On approval, mark `Create sub-issues` in_progress.
+
+Create in dependency order, blockers first, so every issue number exists
+before something needs to reference it. As you create each one, replace its
+draft-slug "blocked by" line with the real issue numbers — a published issue
+must never reference a scratch filename. The native `addBlockedBy` edge below
+is what actually encodes the dependency; the line in the body is only for a
+human reading it.
+
+```bash
+gh issue create --title "Task: <title>" --label task --body-file draft-<slug>.md
+```
+
 Then link relationships via GraphQL (write queries to a temp file and use
 `-F query=@file` — inline quoting breaks in fish):
 
@@ -129,8 +351,22 @@ gh api graphql -F query='mutation { addSubIssue(input:{issueId:"<rfc-id>", subIs
 gh api graphql -F query='mutation { addBlockedBy(input:{issueId:"<blocked-id>", blockingIssueId:"<blocker-id>"}) { issue { number } } }'
 ```
 
+Finally, reconcile the RFC body. §3's **Task breakdown** was written before
+drafting, and the review rounds exist to change which sub-issues there are —
+so by now it is very likely wrong. Rewrite that section to the issues actually
+created, with their real numbers and edges, and push it:
+
+```bash
+gh issue edit <N> --body-file refined.md
+```
+
+The body is the surface `/execute-issue`'s planner reads. A stale task
+breakdown there is the same defect the architecture comment exists to avoid.
+
 ## 5. Report
 
-Final message: link to the refined RFC, the list of created sub-issues with
-their dependency edges, and which task is unblocked and ready for
+Complete the last spine task, then give the user: the link to the refined RFC,
+the link to the architecture comment (or "no boundaries" if the phase found
+none), the created sub-issues with their dependency edges, every residual
+finding you parked, and which task is unblocked and ready for
 `/execute-issue`.

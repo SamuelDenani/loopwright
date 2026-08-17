@@ -9,9 +9,14 @@ execution half.
 ```
 RFC issue (label: rfc)
   │  human writes the initial deliberation
-  │  /grill-rfc <N> — agent interrogates, rewrites the body as the refined
-  │  RFC (original preserved as a comment), creates task sub-issues with
-  │  dependencies (native parent/sub-issue + blocked-by relationships)
+  │  /grill-rfc <N> — agent interrogates, then:
+  │    architect phase → boundary ledger, boundary-reviewer checks the
+  │                      extraction, mermaid per seam posted as ONE issue
+  │                      comment for visual approval (never the body)
+  │    rewrites the body as the refined RFC (original kept as a comment)
+  │    drafts sub-issues as files → set-reviewer (whole set) → N
+  │      sub-issue-reviewers (one draft each, parallel) → your approval
+  │    creates the sub-issues with native parent + blocked-by edges
   ▼
 Task sub-issue (label: task)
   │  /execute-issue <N> — accepts a task OR the RFC itself.
@@ -56,14 +61,27 @@ Ready PR, gate green, reviews addressed → human merges
 - **State lives in artifacts, not sessions**: the refined RFC and its comment
   trail on the issue, the committed spec in `docs/specs/`, per-step commits,
   and the PR conversation. Any session (or human) can pick up a half-done
-  task from these alone.
+  task from these alone — except the grill phase itself, whose task spine and
+  drafts are session-scoped, so a crashed grill restarts.
 - **Merging is always the human's decision.**
+- **Architecture is scaffolding, not a spec.** The architect phase's mermaid
+  lives in an RFC issue comment and never in the issue body, because
+  `planner.md` reads the body via `gh issue view` and comments are not
+  returned. Its consumers are the sub-issue slicing step and the human eye;
+  its job ends when the sub-issues are created. Nothing downstream reads it,
+  so it cannot mislead when it drifts.
+- **`boundary-reviewer` is the first thing to cut.** It is the weakest of the
+  three refinement agents: same input and model as the session that wrote the
+  ledger, only the objective inverted. Its changelog line is the evidence — if
+  it reports `no change` across three RFCs, delete it and rely on the ledger's
+  mandatory reasoned exclusion list alone.
 
 ## Pieces
 
 | Piece | Where |
 |---|---|
-| Agents (planner / coder / reviewer) | `.claude/agents/` |
+| Execution agents (planner / coder / reviewer) | `.claude/agents/` |
+| Refinement agents (boundary-reviewer / set-reviewer / sub-issue-reviewer) | `.claude/agents/` |
 | Skills (grill-rfc / execute-issue / babysit-pr) | `.claude/skills/` |
 | Specs | `docs/specs/issue-<N>.md` |
 | Quality gate | `.loopwright/scripts/quality-gate.mjs`, `docs/loopwright/quality-gate.md` |

@@ -4,3 +4,8 @@ node_modules/
 dist/
 *.log
 .DS_Store
+
+# Claude Code: keep .claude/agents and .claude/skills tracked, ignore per-machine state
+.claude/worktrees/
+.claude/settings.local.json
+.claude/*.local.json
