@@ -86,6 +86,113 @@ The session is done when both directions hold: your frontier is empty AND
 the user's answers match the design. Do not move to step 3 until the user
 confirms you have reached a shared understanding.
 
+## 2c. Architect the boundaries
+
+Only once both directions hold. Mark `Architect` in_progress.
+
+### Extract the ledger
+
+Walk the settled design tree. A decision earns a place only if it creates or
+changes something **two parties must agree on**:
+
+- a new or changed module, service, or process
+- a public interface or API shape
+- a data contract or schema
+- ownership of persisted state
+- a deployment or trust boundary
+
+Algorithm choice, library choice, naming and file layout never qualify. When a
+decision is arguably internal, it **is** internal — this phase is biased
+toward producing output, and the rule exists to counteract that.
+
+Group qualifying decisions **by seam**, not by decision: several decisions
+touching `app <-> Redis` collapse into one boundary. That grouping is what
+caps the diagram count.
+
+```
+BOUNDARIES
+  app <-> Redis    — decisions: workers read from Redis; Redis holds job state
+  client <-> API   — decisions: expose GET /jobs/:id
+
+EXCLUDED (internal)
+  use a worker pool               — no party outside the module observes it
+  retry with exponential backoff  — implementation of an existing contract
+```
+
+The EXCLUDED list is **mandatory and reasoned**. It turns a silent judgment
+into an explicit claim the user can scan in seconds.
+
+**Zero boundaries is a legitimate outcome.** Report it plainly, complete
+`Architect` with the reason in its label ("no boundaries — 7 decisions
+internal"), and go to §3.
+
+### Review the extraction
+
+Dispatch the **boundary-reviewer** agent (its own native task) with the
+settled design tree and the ledger. Adjudicate every finding yourself — apply,
+reject with a reason, or park. It reviews; you rewrite.
+
+Running it before the drawing means a boundary that should not exist is never
+drawn and never shown.
+
+### Draw
+
+One diagram per boundary, type chosen to show what was decided:
+
+| Type | Use when |
+|---|---|
+| `flowchart` | structural seam — who talks to what, what crosses |
+| `sequenceDiagram` | the decision was about ordering or handshake across the seam |
+| `erDiagram` | the boundary is a data contract |
+
+Each diagram carries two to four lines: what crosses the seam, who owns what,
+and which settled decisions it encodes.
+
+**Stay inside a conservative mermaid subset.** No validator exists here, and
+invalid syntax renders as a broken code block on GitHub at exactly the moment
+the user is meant to be approving:
+
+- alphanumeric node ids only
+- no `%%{init}%%` directives
+- no `classDef`, `style` or `click`
+- no nested subgraphs
+- quote any label containing punctuation
+
+### Post and gate
+
+All diagrams go in **one** comment on the RFC, so revisions edit it in place
+instead of stacking:
+
+```bash
+gh issue comment <N> --body-file architecture.md              # first post
+gh issue comment <N> --edit-last --body-file architecture.md  # revisions
+```
+
+`--edit-last` targets your most recent comment. If the user has commented
+since, capture the id from the URL the first post printed
+(`...#issuecomment-<id>`) and patch it directly instead:
+
+```bash
+gh api --method PATCH /repos/<owner>/<repo>/issues/comments/<id> -F body=@architecture.md
+```
+
+Give the user the ledger and the comment URL, and ask for approval.
+
+Two gates:
+
+- **Theirs.** Approve, or say what is wrong. A correction that reveals a
+  decision which was never actually settled reopens that branch on the §2
+  frontier — go back and grill it.
+- **Yours.** If a seam cannot be drawn without inventing a fact nobody
+  decided, that is a frontier question. Stop and ask; never guess.
+
+The architecture stays in the comment and **never enters the RFC body**. The
+planner in `/execute-issue` reads the body via `gh issue view`, which does not
+return comments — so a diagram that drifts cannot become the input a later
+planner plans from. The architecture is scaffolding: its consumers are the
+sub-issue phase, which needs the seams, and the user's eyes. Its job ends when
+the sub-issues are created.
+
 ## 3. Rewrite the issue
 
 First preserve the original deliberation (audit trail), then replace the
