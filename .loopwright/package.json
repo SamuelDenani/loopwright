@@ -1,0 +1,18 @@
+{
+  "name": "loopwright-engine",
+  "private": true,
+  "type": "module",
+  "description": "Vendored loopwright quality-gate engine. Managed by install.sh; edit config.json, not this file.",
+  "engines": { "node": ">=20.11" },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "typescript": "^5.7.2",
+    "jscpd": "^4.0.5"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.10"
+  }
+}

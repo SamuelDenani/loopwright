@@ -1,10 +1,3 @@
-# loopwright
-
-Built from the loopwright project — this repo IS the product: the engine
-lives in `.loopwright/scripts/`, its tests in `.loopwright/tests/`
-(`cd .loopwright && npx vitest run` runs them).
-
-<!-- loopwright:start -->
 ## loopwright
 
 This repo has the loopwright layer vendored under `.loopwright/`: RFC-driven
@@ -60,4 +53,3 @@ and explain it in the PR description.
 
 The baseline is a ratchet, not a knob. Only regenerate it when the metrics
 genuinely improved, and say so explicitly in the PR description.
-<!-- loopwright:end -->

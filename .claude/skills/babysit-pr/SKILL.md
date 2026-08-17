@@ -30,12 +30,19 @@ gh pr view <N> --comments   # quality-gate sticky comment + Claude review
    PR from the list.
 2. **Checks still running** → no action. Wait roughly one CI duration.
 3. **Quality gate red** → the sticky PR comment (same content as
-   `reports/quality-gate.json` in the `quality-reports-*` artifact) lists
-   every blocker with `file:line`. Check out the branch, dispatch a **coder**
-   agent per blocker (or one agent for related blockers), verify locally with
-   `npm run quality`, push. Never "fix" a blocker with a gated shortcut —
-   skipping tests, `as any`, editing `quality-baseline.json` — the gate
-   catches all of them and you lose a round-trip.
+   `.loopwright/reports/quality-gate.json` in the `quality-reports-*`
+   artifact) lists every blocker with `file:line`. Check out the branch,
+   dispatch a **coder** agent per blocker (or one agent for related
+   blockers), verify locally with
+   `node .loopwright/scripts/run-report.mjs --all && node .loopwright/scripts/quality-gate.mjs`,
+   push. Never "fix" a blocker with a gated shortcut — skipping tests,
+   `as any`, and similar patterns are caught by the gate and you lose a
+   round-trip. `.loopwright/baseline.json` is different: the gate does not
+   catch a deleted or edited baseline (it just evaluates as a fresh NEW
+   baseline and passes) — that edit is guarded by the pre-commit hook and by
+   human review instead. The gate does record baseline provenance, but a PR
+   that regenerates the baseline must justify it explicitly in the
+   description; treat an unexplained baseline change as a red flag on review.
 4. **Gate green and PR is draft** → promote it: `gh pr ready <N>`. This
    triggers the Claude review workflow. Wait for it.
 5. **Unaddressed review findings** (Claude review or human) → triage each:
