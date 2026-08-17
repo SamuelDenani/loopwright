@@ -61,7 +61,8 @@ Ready PR, gate green, reviews addressed → human merges
 - **State lives in artifacts, not sessions**: the refined RFC and its comment
   trail on the issue, the committed spec in `docs/specs/`, per-step commits,
   and the PR conversation. Any session (or human) can pick up a half-done
-  task from these alone.
+  task from these alone — except the grill phase itself, whose task spine and
+  drafts are session-scoped, so a crashed grill restarts.
 - **Merging is always the human's decision.**
 - **Architecture is scaffolding, not a spec.** The architect phase's mermaid
   lives in an RFC issue comment and never in the issue body, because

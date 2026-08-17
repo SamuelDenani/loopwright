@@ -45,7 +45,8 @@ lands, and fill in the `TODO(template)` markers in `CLAUDE.md`.
 |---|---|
 | Flow overview | `docs/loop-harness.md` |
 | Gate design | `docs/quality-gate.md` |
-| Agents (planner / coder / reviewer) | `.claude/agents/` |
+| Execution agents (planner / coder / reviewer) | `.claude/agents/` |
+| Refinement agents (boundary-reviewer / set-reviewer / sub-issue-reviewer) | `.claude/agents/` |
 | Skills (grill-rfc / execute-issue / babysit-pr) | `.claude/skills/` |
 | Gate engine | `scripts/quality-gate.mjs`, `quality-gate.config.json` |
 | CI | `.github/workflows/` |

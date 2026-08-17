@@ -261,6 +261,12 @@ if membership changed (any split or merge):
 user approval → create issues → link parent / blockedBy
 ```
 
+After creation, the RFC body's **Task breakdown** is rewritten to the issues
+actually created. It was authored in §3 before drafting, and the review rounds
+are expected to change set membership — leaving it stale would put exactly the
+kind of drifted artifact the comment-only architecture rule exists to prevent
+into the one surface the planner reads.
+
 **Set before sub-issues, deliberately.** Set findings change *which tasks exist*.
 Run the two in parallel and every sub-issue review of a doomed task is wasted
 while the task the set reviewer invents gets no review at all — a second round

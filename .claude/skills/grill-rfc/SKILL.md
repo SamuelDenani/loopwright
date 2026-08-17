@@ -32,7 +32,9 @@ that legitimately did nothing still completes, carrying the reason in its
 label ("no boundaries — 7 decisions internal"); a phase vanishing mid-run
 reads as a bug.
 
-**One task per agent dispatch, and nowhere else.** Agent fan-outs are the only
+**One task per agent dispatch, and nowhere else** — including the
+fact-finding sub-agents §2 dispatches, which get a task like any other
+dispatch. Agent fan-outs are the only
 stretches where the user is in the dark — during the grill they are being
 asked questions. So `Grill` and `Architect` carry their progress in the task
 label ("Grilling: round 3, 4 questions open") rather than spawning a task per
@@ -153,6 +155,10 @@ Dispatch the **boundary-reviewer** agent (its own native task) with the
 settled design tree and the ledger. Adjudicate every finding yourself — apply,
 reject with a reason, or park. It reviews; you rewrite.
 
+Give the user one changelog line for this round — `boundary-reviewer: no
+change`, or what you changed and why — never the raw verdict. That line is
+the standing evidence for whether this reviewer earns its place.
+
 Dispatch it even when BOUNDARIES is empty. A wrongly-empty ledger is exactly
 what this reviewer is best placed to catch — a missed seam surfaces as an
 EXCLUDED entry that meets the test.
@@ -186,7 +192,8 @@ the user is meant to be approving:
 ### Post and gate
 
 All diagrams go in **one** comment on the RFC, so revisions edit it in place
-instead of stacking:
+instead of stacking. Write `architecture.md` in the same scratch directory as
+the drafts, and never commit it to the repo:
 
 ```bash
 gh issue comment <N> --body-file architecture.md              # first post
@@ -224,6 +231,8 @@ sub-issue phase, which needs the seams, and the user's eyes. Its job ends when
 the sub-issues are created.
 
 ## 3. Rewrite the issue
+
+Mark `Rewrite RFC body` in_progress.
 
 First preserve the original deliberation (audit trail), then replace the
 body:
@@ -291,6 +300,9 @@ run the set-reviewer once more on the revised set, and give each newly-born
 draft its one sub-issue review. Cap at **one** re-entry; then adjudicate the
 residuals yourself and carry them into the approval message.
 
+Suffix the re-entry round's native tasks `(round 2)` so they do not collide
+with the first round's by name.
+
 After each round give the user one line — never the raw verdicts:
 
 ```
@@ -309,7 +321,14 @@ it, re-run the set-reviewer once on the revised set, sub-issue-review only
 newly-born drafts, and present again. A user objection is never parked and is
 not subject to the re-entry cap.
 
-On approval, mark `Create sub-issues` in_progress and create each one:
+On approval, mark `Create sub-issues` in_progress.
+
+Create in dependency order, blockers first, so every issue number exists
+before something needs to reference it. As you create each one, replace its
+draft-slug "blocked by" line with the real issue numbers — a published issue
+must never reference a scratch filename. The native `addBlockedBy` edge below
+is what actually encodes the dependency; the line in the body is only for a
+human reading it.
 
 ```bash
 gh issue create --title "Task: <title>" --label task --body-file draft-<slug>.md
@@ -328,6 +347,18 @@ gh api graphql -F query='mutation { addSubIssue(input:{issueId:"<rfc-id>", subIs
 # dependency (task blocked by another task)
 gh api graphql -F query='mutation { addBlockedBy(input:{issueId:"<blocked-id>", blockingIssueId:"<blocker-id>"}) { issue { number } } }'
 ```
+
+Finally, reconcile the RFC body. §3's **Task breakdown** was written before
+drafting, and the review rounds exist to change which sub-issues there are —
+so by now it is very likely wrong. Rewrite that section to the issues actually
+created, with their real numbers and edges, and push it:
+
+```bash
+gh issue edit <N> --body-file refined.md
+```
+
+The body is the surface `/execute-issue`'s planner reads. A stale task
+breakdown there is the same defect the architecture comment exists to avoid.
 
 ## 5. Report
 

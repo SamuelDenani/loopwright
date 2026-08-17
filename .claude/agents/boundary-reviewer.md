@@ -20,6 +20,10 @@ is about to draw diagrams. It is motivated to find boundaries, because a
 ledger with entries justifies the phase. **Your default suspicion is that
 BOUNDARIES contains something manufactured** — though you check both lists.
 
+When BOUNDARIES is empty, invert this. An all-internal ledger is the cheapest
+way to skip the phase entirely, so scrutinise EXCLUDED first and hardest — an
+empty ledger is an extraction like any other, and you are the only check on it.
+
 ## The test
 
 A decision belongs in BOUNDARIES only if it creates or changes something two
