@@ -494,15 +494,21 @@ EXCLUDED (internal)
 The EXCLUDED list is **mandatory and reasoned**. It turns a silent judgment
 into an explicit claim the user can scan in seconds.
 
-**Zero boundaries is a legitimate outcome.** Report it plainly, complete
-`Architect` with the reason in its label ("no boundaries — 7 decisions
-internal"), and go to §3.
+**Zero boundaries is a legitimate outcome** — but an all-empty BOUNDARIES
+list is still an extraction, and declaring everything internal is the
+cheapest way to skip this phase. Review it anyway (next step). Only once the
+reviewer confirms: report it plainly, complete `Architect` with the reason in
+its label ("no boundaries — 7 decisions internal"), and go to §3.
 
 ### Review the extraction
 
 Dispatch the **boundary-reviewer** agent (its own native task) with the
 settled design tree and the ledger. Adjudicate every finding yourself — apply,
 reject with a reason, or park. It reviews; you rewrite.
+
+Dispatch it even when BOUNDARIES is empty. A wrongly-empty ledger is exactly
+what this reviewer is best placed to catch — a missed seam surfaces as an
+EXCLUDED entry that meets the test.
 
 Running it before the drawing means a boundary that should not exist is never
 drawn and never shown.

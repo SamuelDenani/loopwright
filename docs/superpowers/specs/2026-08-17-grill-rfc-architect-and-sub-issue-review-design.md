@@ -139,9 +139,11 @@ The exclusion list is **mandatory and reasoned**. It converts a silent
 judgment into an explicit claim the user reads in five seconds during the
 approval they are already making.
 
-**Zero boundaries is a legitimate outcome.** Report it plainly and skip to
-§3 — many RFCs (tuning gate thresholds, restructuring docs) are correctly
-boundary-free.
+**Zero boundaries is a legitimate outcome** — many RFCs (tuning gate
+thresholds, restructuring docs) are correctly boundary-free. It is still
+reviewed: an all-empty BOUNDARIES list is an extraction like any other, and
+declaring everything internal is the cheapest way to skip the phase. Only
+after `boundary-reviewer` confirms does the phase report it and skip to §3.
 
 ### Step 2 — Review the extraction
 
