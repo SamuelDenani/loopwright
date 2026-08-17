@@ -3,6 +3,7 @@
   "version": "0.2.0",
   "description": "Vendorable quality layer for AI-assisted JS/TS repos: RFC-driven issue flow, agentic execution loop, and a CI quality gate that agents cannot cheat.",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "engines": { "node": ">=20.11" },
   "scripts": {

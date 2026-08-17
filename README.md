@@ -168,3 +168,8 @@ The engine that ships to your repo lives here under `.loopwright/scripts/`,
 covered by 146 tests in `.loopwright/tests/`, gated by the same workflow that
 will gate your PRs — baseline, integrity metrics and all. If the gate is wrong,
 it's wrong here first.
+
+## License
+
+MIT — see [`LICENSE`](LICENSE). Vendoring the layer does not license your repo;
+what `install.sh` copies is yours to modify.
