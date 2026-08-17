@@ -51,7 +51,7 @@ jobs:
           # load-bearing: the skill fans out to Haiku and Sonnet subagents from
           # step 1 onward, and without it the run dies on the first tool call.
           claude_args: |
-            --allowedTools "Task,TodoWrite,Read,Grep,Glob,Write,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr list:*),Bash(gh pr comment:*),Bash(gh pr review:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh search:*),Bash(gh api:*),Bash(git log:*),Bash(git blame:*),Bash(git show:*),Bash(git diff:*),Bash(cat:*),Bash(ls:*),Bash(find:*)"
+            --allowedTools "Task,Skill,TodoWrite,Read,Grep,Glob,Write,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr list:*),Bash(gh pr comment:*),Bash(gh pr review:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh search:*),Bash(gh api:*),Bash(git log:*),Bash(git blame:*),Bash(git show:*),Bash(git diff:*),Bash(cat:*),Bash(ls:*),Bash(find:*)"
           # TEMPORARY: the review runs to completion but publishes nothing, and
           # the denial count is all the summary log gives. Unhide the transcript
           # to see which call is being refused, then remove this again.
@@ -63,10 +63,20 @@ jobs:
           prompt: |
             /code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}
 
-            Always finish by posting a comment on the pull request, even when no
-            issues clear the confidence bar — in that case post the skill's
-            "No issues found" form. Do not skip the review on the grounds that the
-            pull request looks automated, simple, or already reviewed.
+            The following override the skill's own instructions where they conflict:
+
+            1. Run every subagent synchronously and read its result in the same
+               turn. Never launch a background or async agent, and never end your
+               turn to wait for one. This is a non-interactive run: ending the
+               turn ends the review, and nothing gets published.
+            2. Never exit early. The skill's step 1 eligibility check and its
+               step 6 "nothing cleared the confidence bar" branch both stop
+               without commenting. Ignore both and carry on to the final comment,
+               whatever they conclude.
+            3. Finish by running `gh pr comment` exactly once. When no issue
+               cleared the bar, post the skill's "No issues found" form.
+
+            The run has failed if it ends without a comment on the pull request.
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
 
