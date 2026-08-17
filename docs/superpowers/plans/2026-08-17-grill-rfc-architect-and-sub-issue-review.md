@@ -564,6 +564,11 @@ Two gates:
 - **Yours.** If a seam cannot be drawn without inventing a fact nobody
   decided, that is a frontier question. Stop and ask; never guess.
 
+On approval, complete `Architect`. The phase's output is the approved
+diagrams, so it closes here — not back when the boundary-reviewer's findings
+were adjudicated, which is mid-phase with the drawing and both gates still
+ahead.
+
 The architecture stays in the comment and **never enters the RFC body**. The
 planner in `/execute-issue` reads the body via `gh issue view`, which does not
 return comments — so a diagram that drifts cannot become the input a later

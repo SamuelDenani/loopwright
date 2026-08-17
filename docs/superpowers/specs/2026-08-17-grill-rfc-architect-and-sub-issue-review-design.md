@@ -191,6 +191,10 @@ Two gates:
 - **The phase's own.** If a seam cannot be drawn without inventing a fact
   nobody decided, that is a frontier question. Stop and ask; do not guess.
 
+On approval the phase completes. Its output is the approved diagrams, so
+`Architect` closes at this gate — not at the earlier point where the
+boundary-reviewer's findings were adjudicated.
+
 ### Why the comment and not the body
 
 `planner.md` reads the parent RFC via `gh issue view`, which returns the body
