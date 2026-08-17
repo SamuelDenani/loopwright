@@ -19,6 +19,25 @@ gh issue view <N> --json number,title,body,labels,url
 Abort unless the issue has the `rfc` label. The deliberation in the body
 seeds the design tree below — its central decision is the root.
 
+Then create the run's **native task spine** (TaskCreate), in this order:
+`Grill` · `Reverse grill` · `Architect` · `Rewrite RFC body` ·
+`Draft sub-issues` · `Review sub-issues` · `Create sub-issues`. No dependency
+edges — the spine is sequential and reads that way by id. It exists so the
+user can see the shape of the run before the first question.
+
+Keep it live for the rest of the session. A phase goes in_progress when it
+starts and completed when its output is **adjudicated**, not when an agent
+replies — otherwise the list goes green while the work is still open. A phase
+that legitimately did nothing still completes, carrying the reason in its
+label ("no boundaries — 7 decisions internal"); a phase vanishing mid-run
+reads as a bug.
+
+**One task per agent dispatch, and nowhere else.** Agent fan-outs are the only
+stretches where the user is in the dark — during the grill they are being
+asked questions. So `Grill` and `Architect` carry their progress in the task
+label ("Grilling: round 3, 4 questions open") rather than spawning a task per
+round: a task per round is unbounded and would bury the spine.
+
 ## 2. Grill
 
 Interview the user relentlessly until you reach a shared understanding. Map
@@ -307,6 +326,8 @@ gh api graphql -F query='mutation { addBlockedBy(input:{issueId:"<blocked-id>", 
 
 ## 5. Report
 
-Final message: link to the refined RFC, the list of created sub-issues with
-their dependency edges, and which task is unblocked and ready for
+Complete the last spine task, then give the user: the link to the refined RFC,
+the link to the architecture comment (or "no boundaries" if the phase found
+none), the created sub-issues with their dependency edges, every residual
+finding you parked, and which task is unblocked and ready for
 `/execute-issue`.
