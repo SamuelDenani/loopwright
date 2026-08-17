@@ -367,7 +367,7 @@ three are read-only, report-never-fix, matching the existing `reviewer.md`
 contract shape.
 
 **Modified** — `.claude/skills/grill-rfc/SKILL.md` (new §2c, rewritten §4,
-task spine in §1). `docs/loop-harness.md` (flow diagram and Pieces table).
+task spine in §1). `docs/loopwright/loop-harness.md` (flow diagram and Pieces table).
 
 **Unchanged** — `execute-issue`, `babysit-pr`, `planner.md`, `coder.md`,
 `reviewer.md`, the quality gate, the issue templates.

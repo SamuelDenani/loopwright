@@ -36,7 +36,7 @@
 | `.claude/agents/set-reviewer.md` (create) | Judges a draft set as a set — coverage, overlap, minimality, edges. The only agent that sees every draft. |
 | `.claude/agents/sub-issue-reviewer.md` (create) | Judges ONE draft against the size rule and RFC intent. Never sees siblings. |
 | `.claude/skills/grill-rfc/SKILL.md` (modify) | §1 gains the task spine; new §2c architect phase; §4 replaced by draft → review → approve → create; §5 report updated. |
-| `docs/loop-harness.md` (modify) | Flow diagram and Pieces table reflect the new phases and agents. |
+| `docs/loopwright/loop-harness.md` (modify) | Flow diagram and Pieces table reflect the new phases and agents. |
 
 ---
 
@@ -878,10 +878,10 @@ EOF
 
 ---
 
-### Task 7: Update `docs/loop-harness.md`
+### Task 7: Update `docs/loopwright/loop-harness.md`
 
 **Files:**
-- Modify: `docs/loop-harness.md` — the `RFC issue (label: rfc)` block of the Flow diagram, and the Agents row of the Pieces table.
+- Modify: `docs/loopwright/loop-harness.md` — the `RFC issue (label: rfc)` block of the Flow diagram, and the Agents row of the Pieces table.
 
 **Interfaces:**
 - Consumes: everything. Documentation task, runs last.
@@ -891,9 +891,9 @@ EOF
 
 ```bash
 cd /Users/samuel/Code/loopwright
-grep -q 'boundary-reviewer' docs/loop-harness.md \
-  && grep -q 'set-reviewer' docs/loop-harness.md \
-  && grep -q 'sub-issue-reviewer' docs/loop-harness.md \
+grep -q 'boundary-reviewer' docs/loopwright/loop-harness.md \
+  && grep -q 'set-reviewer' docs/loopwright/loop-harness.md \
+  && grep -q 'sub-issue-reviewer' docs/loopwright/loop-harness.md \
   && echo PASS || echo FAIL
 ```
 
@@ -954,9 +954,9 @@ Append as a new bullet at the end of the `## Rules of the loop` list:
 
 ```bash
 cd /Users/samuel/Code/loopwright
-grep -q 'boundary-reviewer' docs/loop-harness.md \
-  && grep -q 'set-reviewer' docs/loop-harness.md \
-  && grep -q 'sub-issue-reviewer' docs/loop-harness.md \
+grep -q 'boundary-reviewer' docs/loopwright/loop-harness.md \
+  && grep -q 'set-reviewer' docs/loopwright/loop-harness.md \
+  && grep -q 'sub-issue-reviewer' docs/loopwright/loop-harness.md \
   && echo PASS || echo FAIL
 
 # every agent named anywhere in .claude/ resolves to a file
@@ -974,7 +974,7 @@ Expected: `PASS`, six `PASS <agent>` lines, and a green quality gate.
 
 ```bash
 cd /Users/samuel/Code/loopwright
-git add docs/loop-harness.md
+git add docs/loopwright/loop-harness.md
 git commit -F - <<'EOF'
 docs: document the architect and sub-issue review phases
 

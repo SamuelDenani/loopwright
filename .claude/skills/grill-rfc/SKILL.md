@@ -32,10 +32,13 @@ that legitimately did nothing still completes, carrying the reason in its
 label ("no boundaries — 7 decisions internal"); a phase vanishing mid-run
 reads as a bug.
 
-**One task per agent dispatch, and nowhere else** — including the
-fact-finding sub-agents §2 dispatches, which get a task like any other
-dispatch. Agent fan-outs are the only
-stretches where the user is in the dark — during the grill they are being
+**One task per agent dispatch, with one exception** — the fact-finding
+sub-agents §2 dispatches during the grill. Those are per-round and unbounded
+like the rounds themselves, so they fold into the `Grill` task's label rather
+than spawning their own. The review fan-outs (`boundary-reviewer` in §2c,
+`set-reviewer` and the per-draft `sub-issue-reviewer`s in §4b) each get their
+own native task — those are bounded, and they're the stretches where the user
+is genuinely in the dark, unlike the grill itself where the user is being
 asked questions. So `Grill` and `Architect` carry their progress in the task
 label ("Grilling: round 3, 4 questions open") rather than spawning a task per
 round: a task per round is unbounded and would bury the spine.
