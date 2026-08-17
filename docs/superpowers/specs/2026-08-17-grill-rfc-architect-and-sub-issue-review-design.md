@@ -1,4 +1,4 @@
-# Grill-RFC: an architect phase, a reviewed slice phase, and a task spine
+# Grill-RFC: an architect phase, a reviewed sub-issue phase, and a task spine
 
 **Date:** 2026-08-17
 **Status:** Approved design, pending implementation plan
@@ -30,7 +30,7 @@ Three additions to `/grill-rfc`:
 
 1. An **architect phase** that draws boundaries — and only boundaries — as
    mermaid, for visual approval.
-2. A **reviewed slice phase**: sub-issues are drafted granular by
+2. A **reviewed sub-issue phase**: sub-issues are drafted granular by
    construction, then reviewed by agents before any issue is created.
 3. A **native task spine** so the run is legible while it runs.
 
@@ -67,7 +67,7 @@ against that standard:
 | Reviewer | Independence | Basis |
 |---|---|---|
 | `set-reviewer` | Strong | Sees what a per-task view structurally cannot contain |
-| `slice-reviewer` | Medium | Fresh context, no sunk cost, and its rule is countable |
+| `sub-issue-reviewer` | Medium | Fresh context, no sunk cost, and its rule is countable |
 | `boundary-reviewer` | Weak | Same input, same model, only the objective inverted |
 
 **2. Verdicts must be falsifiable.** Every finding names a specific artifact —
@@ -93,7 +93,7 @@ runtime enforcement is rule 2, which stops it inventing findings to survive.
 
 Everything added here reads prose: issue text, a ledger, draft task bodies.
 None of it reads the codebase. `/execute-issue` dispatches a planner plus a
-coder plus a reviewer *per plan step*, all of which do. If granular slicing
+coder plus a reviewer *per plan step*, all of which do. If a granular breakdown
 prevents even one five-round fix loop over there, this entire review layer is
 paid for several times over.
 
@@ -193,17 +193,17 @@ Two gates:
 
 `planner.md` reads the parent RFC via `gh issue view`, which returns the body
 and not comments. Keeping architecture out of the body means a drifted diagram
-physically cannot become the input a later planner slices from — the failure
+physically cannot become the input a later planner plans from — the failure
 mode of treating ADRs as durable planning input.
 
-The architecture is **scaffolding**: its consumers are the slice phase, which
+The architecture is **scaffolding**: its consumers are the sub-issue phase, which
 needs the seams, and the user's eyes. Its job ends when the sub-issues are
 created. Nothing downstream is supposed to read it, so it cannot mislead when
 it rots. Re-running `/grill-rfc` posts a newer comment; latest wins.
 
 **Accepted cost:** someone reading only the RFC body never sees a diagram.
 
-## Phase 4 — Drafting and reviewing the slices
+## Phase 4 — Drafting and reviewing the sub-issues
 
 Replaces the current §4.
 
@@ -219,7 +219,7 @@ create` plus GraphQL `addSubIssue` / `addBlockedBy` mechanics.
 
 If the user rejects the set at that final approval, their objection is treated
 as a set-level finding: the orchestrator applies it, re-runs `set-reviewer`
-once on the revised set, slice-reviews only newly-born tasks, and presents
+once on the revised set, runs sub-issue review on newly-born tasks only, and presents
 again. This is the same convergence rule as the re-entry above, and it is not
 subject to the one-re-entry cap — a user objection is never parked.
 
@@ -227,7 +227,7 @@ subject to the one-re-entry cap — a user objection is never parked.
 
 Applied at **drafting** time first and review time second. The loops this
 design exists to minimise are cheapest to avoid by not drafting a fat task.
-Where the ledger has seams, they are the slice lines.
+Where the ledger has seams, they are the split lines.
 
 A draft task is correctly sized when all three hold:
 
@@ -246,31 +246,31 @@ draft (granular by construction)
   └─ log the full set to the user            ← visibility, no approval asked
 set-reviewer          (refined RFC + ledger + whole draft set)
   └─ orchestrator adjudicates → rewrite → changelog line
-slice-reviewers       (N in parallel; each: ONE draft + RFC + ledger)
+sub-issue-reviewers   (N in parallel; each: ONE draft + RFC + ledger)
   └─ orchestrator adjudicates → rewrite → changelog line
 if membership changed (any split or merge):
   set-reviewer once more on the revised set
-  + slice-review for newly-born tasks only
+  + sub-issue review for newly-born tasks only
   └─ cap: one re-entry
 user approval → create issues → link parent / blockedBy
 ```
 
-**Set before slices, deliberately.** Set findings change *which tasks exist*.
-Run the two in parallel and every slice review of a doomed task is wasted
+**Set before sub-issues, deliberately.** Set findings change *which tasks exist*.
+Run the two in parallel and every sub-issue review of a doomed task is wasted
 while the task the set reviewer invents gets no review at all — a second round
 becomes guaranteed whenever the set reviewer finds anything. Sequential makes
-the second round the exception. It also raises slice-review accuracy: "is this
+the second round the exception. It also raises sub-issue review accuracy: "is this
 one seam?" is ambiguous while the task is still a merge candidate.
 
-**Convergence.** A split or merge from the slice round is itself a membership
+**Convergence.** A split or merge from the sub-issue round is itself a membership
 change, so the set reviewer runs once more on the revised set and newly-born
-tasks get their one slice review. Splits are local, so this converges fast.
+tasks get their one sub-issue review. Splits are local, so this converges fast.
 Capped at one re-entry; the orchestrator then adjudicates residuals and
 surfaces them in the approval message.
 
 ### What each reviewer judges
 
-**`slice-reviewer`** — input: one draft file, the refined RFC, the ledger. It
+**`sub-issue-reviewer`** — input: one draft file, the refined RFC, the ledger. It
 does **not** see the other drafts; that is what keeps its context small and
 its judgment independent, and coverage is explicitly not its job. It judges:
 the three size-rule clauses, criteria testability, and faithfulness to RFC
@@ -307,7 +307,7 @@ parks each finding. What the user sees is one line per reviewer round:
 
 ```
 set-reviewer: 2 gaps, 1 overlap → added draft-migrate-jobs, merged draft-b + draft-c
-slice-reviewers (6): 1 split → draft-api split into draft-api-read, draft-api-write
+sub-issue-reviewers (6): 1 split → draft-api split into draft-api-read, draft-api-write
 boundary-reviewer: no change
 ```
 
@@ -350,7 +350,7 @@ repeats the other.
 ## Files
 
 **New** — `.claude/agents/boundary-reviewer.md`,
-`.claude/agents/set-reviewer.md`, `.claude/agents/slice-reviewer.md`. All
+`.claude/agents/set-reviewer.md`, `.claude/agents/sub-issue-reviewer.md`. All
 three are read-only, report-never-fix, matching the existing `reviewer.md`
 contract shape.
 
