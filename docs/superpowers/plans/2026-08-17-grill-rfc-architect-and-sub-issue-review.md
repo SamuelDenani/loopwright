@@ -585,7 +585,7 @@ cd /Users/samuel/Code/loopwright
 grep -n '^## ' .claude/skills/grill-rfc/SKILL.md
 test -f .claude/agents/boundary-reviewer.md && echo "PASS agent exists" || echo "FAIL agent missing"
 grep -q 'Architecture' .claude/skills/grill-rfc/SKILL.md && grep -q 'Refined RFC structure' .claude/skills/grill-rfc/SKILL.md \
-  && grep -A3 'Refined RFC structure' .claude/skills/grill-rfc/SKILL.md | grep -q 'Architecture' \
+  && grep -A8 'Refined RFC structure' .claude/skills/grill-rfc/SKILL.md | grep -q 'Architecture' \
   && echo "FAIL - architecture leaked into the RFC body structure" || echo "PASS - body structure unchanged"
 ```
 
