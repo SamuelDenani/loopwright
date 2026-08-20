@@ -4,7 +4,7 @@
   "collectors": {
     "typecheck":   { "adapter": "unconfigured" },
     "lint":        { "adapter": "eslint" },
-    "tests":       { "adapter": "vitest", "command": "npx vitest run --coverage", "cwd": ".loopwright" },
+    "tests":       { "adapter": "vitest", "command": "vitest run --coverage", "cwd": ".loopwright" },
     "audit":       { "adapter": "npm-audit" },
     "duplication": { "adapter": "jscpd" }
   },

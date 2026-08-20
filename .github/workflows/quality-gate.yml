@@ -29,6 +29,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      # corepack activates the pnpm/yarn version pinned by the host's
+      # `packageManager` field. It is a no-op on an npm host, so it is
+      # unconditional rather than guarded on a lockfile.
+      - name: Enable corepack
+        run: corepack enable
+
       # cache: npm with a two-path cache-dependency-path stays valid even on a
       # host with no package-lock.json (e.g. a yarn/pnpm project): the second
       # path, .loopwright/package-lock.json, is always vendored and always
@@ -43,12 +49,22 @@ jobs:
             package-lock.json
             .loopwright/package-lock.json
 
+      # The collectors run the host's own binaries out of node_modules/.bin, so
+      # this step is what makes them resolve at all. Skipping it does not fail
+      # here — it fails later, as every collector reporting 'n/a', which reads
+      # like a broken gate rather than a missing install. Each branch uses the
+      # lockfile-respecting install for its package manager so CI matches the
+      # committed tree.
       - name: Install host dependencies
         run: |
-          if [ -f package-lock.json ]; then
+          if [ -f pnpm-lock.yaml ]; then
+            pnpm install --frozen-lockfile
+          elif [ -f yarn.lock ]; then
+            yarn install --immutable || yarn install --frozen-lockfile
+          elif [ -f package-lock.json ]; then
             npm ci
           else
-            echo "no package-lock.json — skipping host npm ci; install host deps in a preceding step if needed"
+            echo "no lockfile — skipping host install; install host deps in a preceding step if needed"
           fi
 
       - name: Install engine dependencies
