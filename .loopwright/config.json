@@ -47,14 +47,14 @@
       "onRegression": "block"
     },
     "lint.errors": {
-      "label": "ESLint errors",
+      "label": "Lint errors",
       "direction": "lower-better",
       "hardMax": 0,
       "tolerance": 0,
       "onRegression": "block"
     },
     "lint.warnings": {
-      "label": "ESLint warnings",
+      "label": "Lint warnings",
       "direction": "lower-better",
       "tolerance": 0,
       "onRegression": "block"
@@ -172,7 +172,7 @@
       "onRegression": "block"
     },
     "integrity.lintSuppressions": {
-      "label": "Inline eslint-disable",
+      "label": "Inline lint suppressions",
       "direction": "lower-better",
       "tolerance": 0,
       "onRegression": "warn"

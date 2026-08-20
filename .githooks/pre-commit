@@ -17,7 +17,12 @@ fail() { echo "pre-commit: $1" >&2; exit 1; }
 # merging main into a branch trips the hook on files nobody edited. Both
 # exclude forms are needed: a git pathspec's leading `**/` requires at least
 # one directory component, so it alone would miss a root-level `fixtures/`.
-added=$(git diff --cached -U0 -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' ':(exclude)fixtures/**' ':(exclude)**/fixtures/**' | grep '^+[^+]' || true)
+#
+# analyze-source.mjs is excluded for the same reason as the fixtures: it is
+# where the detectors are defined, so it necessarily spells out every pattern
+# it looks for. The gate still scans it in CI — where those literals are
+# already part of the recorded baseline — so nothing goes unmeasured.
+added=$(git diff --cached -U0 -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' ':(exclude)fixtures/**' ':(exclude)**/fixtures/**' ':(exclude).loopwright/scripts/lib/analyze-source.mjs' | grep '^+[^+]' || true)
 if [ -n "$added" ]; then
   declare -a patterns=(
     '\.only *\('            'a focused test (.only)'
