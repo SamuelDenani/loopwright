@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { analyzeSources } from '../scripts/lib/analyze-source.mjs';
 
 function writeFixture(content) {
@@ -148,57 +148,33 @@ describe('empty catch detection', () => {
   });
 });
 
-// Composed rather than written out, because sources.roots covers this
-// directory: a literal suppression comment in this file would be counted as a
-// real suppression by the very scanner under test, and the integrity metric
-// would climb every time someone tested it.
-const ESLINT = `eslint-${'disable'}`;
-const BIOME = `biome-${'ignore'}`;
+// The bait lives in tests/fixtures/, which `sources.ignore` and the hook both
+// exclude: sources.roots covers this directory, so a suppression written out
+// in a test would be counted as a real one by the scanner under test.
+function suppressionsIn(name) {
+  const file = join(import.meta.dirname, 'fixtures', 'suppressions', name);
+  return analyzeSources([file], dirname(file)).findings.lintSuppressions;
+}
 
 describe('lint suppressions — both supported linters', () => {
   it('counts an eslint suppression in each of its comment forms', () => {
-    const { root, file } = writeFixture(
-      [
-        `/* ${ESLINT} no-console */`,
-        `// ${ESLINT}-next-line no-alert`,
-        `const a = 1; // ${ESLINT}-line no-unused-vars`,
-        'export const b = a;',
-      ].join('\n'),
-    );
-    const { findings } = analyzeSources([file], root);
-    expect(findings.lintSuppressions).toHaveLength(3);
+    expect(suppressionsIn('eslint-forms.mjs')).toHaveLength(3);
   });
 
   // Regression: this matched only one of the two linters loopwright supports,
   // so a biome repo reported zero suppressions however many it carried — a
   // check that cannot see anything reads exactly like nothing to see.
   it('counts a biome suppression in each of its comment forms', () => {
-    const { root, file } = writeFixture(
-      [
-        `// ${BIOME} lint/suspicious/noExplicitAny: needed here`,
-        'export const a = 1;',
-        `// ${BIOME}-start lint/style/useConst: block form`,
-        'export const b = 2;',
-        `// ${BIOME}-end lint/style/useConst: block form`,
-      ].join('\n'),
-    );
-    const { findings } = analyzeSources([file], root);
-    expect(findings.lintSuppressions).toHaveLength(3);
+    expect(suppressionsIn('biome-forms.mjs')).toHaveLength(3);
   });
 
   it('reports the file and line of each suppression so the gate can cite it', () => {
-    const { root, file } = writeFixture(
-      ['export const a = 1;', `// ${BIOME} lint/style/useConst: reason`, 'export const b = 2;'].join('\n'),
-    );
-    const { findings } = analyzeSources([file], root);
-    expect(findings.lintSuppressions).toHaveLength(1);
-    expect(findings.lintSuppressions[0].line).toBe(2);
-    expect(findings.lintSuppressions[0].file).toBe('sample.mjs');
+    const found = suppressionsIn('biome-forms.mjs');
+    expect(found.map((entry) => entry.line)).toEqual([1, 3, 5]);
+    expect(found[0].file).toBe('biome-forms.mjs');
   });
 
   it('leaves a file with no suppressions at zero', () => {
-    const { root, file } = writeFixture('export const a = 1; // an ordinary comment\n');
-    const { findings } = analyzeSources([file], root);
-    expect(findings.lintSuppressions).toHaveLength(0);
+    expect(suppressionsIn('clean.mjs')).toHaveLength(0);
   });
 });

@@ -18,11 +18,14 @@ fail() { echo "pre-commit: $1" >&2; exit 1; }
 # exclude forms are needed: a git pathspec's leading `**/` requires at least
 # one directory component, so it alone would miss a root-level `fixtures/`.
 #
-# analyze-source.mjs is excluded for the same reason as the fixtures: it is
-# where the detectors are defined, so it necessarily spells out every pattern
-# it looks for. The gate still scans it in CI — where those literals are
-# already part of the recorded baseline — so nothing goes unmeasured.
-added=$(git diff --cached -U0 -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' ':(exclude)fixtures/**' ':(exclude)**/fixtures/**' ':(exclude).loopwright/scripts/lib/analyze-source.mjs' | grep '^+[^+]' || true)
+# .loopwright/ is excluded wholesale. In a host repo it is vendored code
+# nobody hand-edits, so policing it only ever fires on a re-vendor. In this
+# repo it is the engine, whose detector definitions necessarily spell out
+# every pattern they look for — grepping for those literals in the file that
+# declares them is a false positive by construction. Either way the gate
+# still scans it in CI, and the gate is the authority; this hook only exists
+# to deliver the same answer sooner.
+added=$(git diff --cached -U0 -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' ':(exclude)fixtures/**' ':(exclude)**/fixtures/**' ':(exclude).loopwright/**' | grep '^+[^+]' || true)
 if [ -n "$added" ]; then
   declare -a patterns=(
     '\.only *\('            'a focused test (.only)'
