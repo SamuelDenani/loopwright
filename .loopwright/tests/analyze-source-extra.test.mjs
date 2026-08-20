@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { analyzeSources } from '../scripts/lib/analyze-source.mjs';
 
 function writeFixture(content) {
@@ -145,5 +145,36 @@ describe('empty catch detection', () => {
     const { root, file } = writeFixture('function f() {\n  try {\n    risky();\n  } catch {\n  }\n}\n');
     const { findings } = analyzeSources([file], root);
     expect(findings.emptyCatches).toHaveLength(1);
+  });
+});
+
+// The bait lives in tests/fixtures/, which `sources.ignore` and the hook both
+// exclude: sources.roots covers this directory, so a suppression written out
+// in a test would be counted as a real one by the scanner under test.
+function suppressionsIn(name) {
+  const file = join(import.meta.dirname, 'fixtures', 'suppressions', name);
+  return analyzeSources([file], dirname(file)).findings.lintSuppressions;
+}
+
+describe('lint suppressions — both supported linters', () => {
+  it('counts an eslint suppression in each of its comment forms', () => {
+    expect(suppressionsIn('eslint-forms.mjs')).toHaveLength(3);
+  });
+
+  // Regression: this matched only one of the two linters loopwright supports,
+  // so a biome repo reported zero suppressions however many it carried — a
+  // check that cannot see anything reads exactly like nothing to see.
+  it('counts a biome suppression in each of its comment forms', () => {
+    expect(suppressionsIn('biome-forms.mjs')).toHaveLength(3);
+  });
+
+  it('reports the file and line of each suppression so the gate can cite it', () => {
+    const found = suppressionsIn('biome-forms.mjs');
+    expect(found.map((entry) => entry.line)).toEqual([1, 3, 5]);
+    expect(found[0].file).toBe('biome-forms.mjs');
+  });
+
+  it('leaves a file with no suppressions at zero', () => {
+    expect(suppressionsIn('clean.mjs')).toHaveLength(0);
   });
 });

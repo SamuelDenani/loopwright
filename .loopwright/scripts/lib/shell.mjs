@@ -13,7 +13,8 @@
  */
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { delimiter, dirname, resolve } from 'node:path';
+import { HOST_ROOT } from './paths.mjs';
 
 export const REPORT_FILES = {
   typecheck: ['typecheck.json'],
@@ -23,8 +24,30 @@ export const REPORT_FILES = {
   duplication: ['jscpd/jscpd-report.json'],
 };
 
+/**
+ * Adapter commands name a bare binary (`tsc`, `vitest`, …) and rely on this
+ * PATH, rather than going through `npx`. npx falls through to the registry
+ * when a binary is not installed locally, so on a repo whose dependencies were
+ * never installed — or installed by a package manager the workflow did not
+ * recognise — `npx tsc` silently downloads `tsc`, an unrelated abandoned
+ * package that is not TypeScript, and the collector reports its nonsense as
+ * fact. Every package manager (npm, pnpm, yarn) populates node_modules/.bin,
+ * so resolving through it works for all three, and a genuinely missing tool
+ * fails with 'command not found' — which each adapter's TOOL_MISSING check
+ * already reports honestly.
+ *
+ * Both the host root and `cwd` contribute a bin directory: a collector may set
+ * `cwd` to a subdirectory with its own install (loopwright's own config points
+ * the tests collector at .loopwright/).
+ */
+function binPath(cwd) {
+  const dirs = [resolve(cwd, 'node_modules/.bin'), resolve(HOST_ROOT, 'node_modules/.bin')];
+  return [...new Set(dirs), process.env.PATH ?? ''].join(delimiter);
+}
+
 export function runShell(command, cwd, { maxBuffer = 64 * 1024 * 1024 } = {}) {
-  const result = spawnSync(command, { shell: true, cwd, encoding: 'utf8', maxBuffer });
+  const env = { ...process.env, PATH: binPath(cwd) };
+  const result = spawnSync(command, { shell: true, cwd, encoding: 'utf8', maxBuffer, env });
   // spawnSync reports a failure to run the command at all — the shell missing,
   // or output overflowing maxBuffer — on `error` rather than through the exit
   // status. Dropping it would leave the caller with a bare status 1 and empty

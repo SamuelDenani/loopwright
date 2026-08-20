@@ -83,7 +83,7 @@ they're absent, and never touches your `config.json` or `baseline.json`. Your
 stack stays yours: loopwright owns `.loopwright/` and nothing else.
 
 **Or use this repo as a template** if you'd rather own the layer itself — you
-get the engine, its 146 tests and its docs as a starting point to modify. Point
+get the engine, its 148 tests and its docs as a starting point to modify. Point
 `sources.roots` in `.loopwright/config.json` at your code and re-baseline.
 
 ## Your stack, not loopwright's
@@ -107,6 +107,20 @@ is not a way to pass the gate.
 
 A tool that's configured but can't run writes `{ok: false, error}` and **blocks**.
 Infrastructure failure must never look like success.
+
+### Package managers
+
+npm, pnpm and yarn all work. Adapters invoke bare binaries (`tsc`, `vitest`, …)
+and the engine resolves them from your `node_modules/.bin` — never through
+`npx`, which falls back to the registry and will happily download an unrelated
+package of the same name when your dependencies aren't installed. The CI
+workflow installs host dependencies with whichever package manager your lockfile
+names.
+
+`audit` is the one collector that is npm-only: `pnpm audit --json` and
+`yarn npm audit` emit a different report shape than `npm-audit` parses, so on a
+pnpm or yarn host the detector leaves `audit` **unconfigured** rather than
+wiring an adapter that would silently report zero advisories.
 
 ## The loop
 
@@ -157,6 +171,7 @@ authoritative verdict.
 ## Requirements
 
 - Node ≥ 20.11 and a `package.json` (loopwright targets JS/TS repos)
+- npm, pnpm or yarn — the engine and its CI workflow detect which from your lockfile
 - [`gh`](https://cli.github.com), authenticated
 - [Claude Code](https://claude.com/claude-code) locally, and the
   [Claude GitHub App](https://github.com/apps/claude) on the repo for the
@@ -165,7 +180,7 @@ authoritative verdict.
 ## This repo runs on itself
 
 The engine that ships to your repo lives here under `.loopwright/scripts/`,
-covered by 146 tests in `.loopwright/tests/`, gated by the same workflow that
+covered by 148 tests in `.loopwright/tests/`, gated by the same workflow that
 will gate your PRs — baseline, integrity metrics and all. If the gate is wrong,
 it's wrong here first.
 

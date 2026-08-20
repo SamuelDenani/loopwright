@@ -56,7 +56,7 @@ function writeLintReport(reportsDir, payload) {
 export default {
   name: 'biome',
   collector: 'lint',
-  defaultCommand: 'npx biome check --reporter=json .',
+  defaultCommand: 'biome check --reporter=json .',
   collect(ctx) {
     const { command, cwd, reportsDir, hostRoot } = ctx;
     const result = runShell(command, cwd);

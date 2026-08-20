@@ -39,7 +39,7 @@ function writeTypecheckReport(reportsDir, payload) {
 export default {
   name: 'tsc',
   collector: 'typecheck',
-  defaultCommand: 'npx tsc --noEmit --pretty false',
+  defaultCommand: 'tsc --noEmit --pretty false',
   collect(ctx) {
     const { command, cwd, reportsDir } = ctx;
     const result = runShell(command, cwd);
