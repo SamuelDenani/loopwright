@@ -26,7 +26,7 @@ export default {
   name: 'jest',
   collector: 'tests',
   defaultCommand:
-    'npx jest --ci --json --outputFile=.loopwright/reports/test-results.json --coverage --coverageReporters=json-summary --coverageDirectory=.loopwright/reports/coverage',
+    'jest --ci --json --outputFile=.loopwright/reports/test-results.json --coverage --coverageReporters=json-summary --coverageDirectory=.loopwright/reports/coverage',
   collect(ctx) {
     const { command, cwd, reportsDir, hostRoot } = ctx;
     const result = runShell(command, cwd);

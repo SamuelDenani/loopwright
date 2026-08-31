@@ -43,7 +43,10 @@ const SUITE_CALLEES = new Set(['describe', 'xdescribe', 'fdescribe', 'suite']);
 
 const COVERAGE_IGNORE = /\b(?:istanbul|v8|c8|node:coverage)\s+ignore\b/;
 const TS_SUPPRESSION = /@ts-(?:ignore|nocheck|expect-error)\b/;
-const ESLINT_SUPPRESSION = /eslint-disable(?:-next-line|-line)?\b/;
+// Both linters loopwright supports, in one rule: an integrity metric that
+// only knows eslint reports a clean zero on a biome repo, which reads as
+// 'nobody suppressed anything' rather than 'this check cannot see anything'.
+const LINT_SUPPRESSION = /eslint-disable(?:-next-line|-line)?\b|biome-ignore(?:-start|-end)?\b/;
 const ASSERTION = /\b(?:expect|expectTypeOf|assert|should)\s*[.(]/;
 
 function isFunctionLike(node) {
@@ -157,7 +160,7 @@ function scanComments(text, filePath, findings) {
     const location = { file: filePath, line: index + 1, snippet: line.trim().slice(0, 120) };
     if (COVERAGE_IGNORE.test(line)) findings.coverageIgnores.push(location);
     if (TS_SUPPRESSION.test(line)) findings.typeSuppressions.push(location);
-    if (ESLINT_SUPPRESSION.test(line)) findings.lintSuppressions.push(location);
+    if (LINT_SUPPRESSION.test(line)) findings.lintSuppressions.push(location);
   });
 }
 

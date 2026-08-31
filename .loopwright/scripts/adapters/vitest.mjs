@@ -81,7 +81,7 @@ export default {
   name: 'vitest',
   collector: 'tests',
   defaultCommand:
-    'npx vitest run --coverage --coverage.reporter=json-summary --coverage.reportsDirectory=.loopwright/reports/coverage --reporter=default --reporter=json --outputFile.json=.loopwright/reports/test-results.json',
+    'vitest run --coverage --coverage.reporter=json-summary --coverage.reportsDirectory=.loopwright/reports/coverage --reporter=default --reporter=json --outputFile.json=.loopwright/reports/test-results.json',
   collect(ctx) {
     const { command, cwd, reportsDir, hostRoot } = ctx;
     const result = runShell(command, cwd);
