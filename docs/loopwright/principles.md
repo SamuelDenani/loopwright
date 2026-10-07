@@ -100,6 +100,32 @@ For how work flows from an issue to a merged change, see
   - `rejects:` a connector that reports a metric key core does not define.
   - `enforced by:` `.loopwright/scripts/lib/collect-metrics.mjs`
 
+**The P2/P8 division of labour.** P2 decides what "done" is: every
+configured check green for the current diff and review findings resolved.
+P8 decides who may act on an irreversible action. Nothing may silently
+remove the human from an irreversible action; who merges is a default, and
+a configurable one. Which CI step may fail the build is mechanics and lives
+in `docs/loopwright/quality-gate.md`.
+
+**The irreversibles.** Enumerated today: merge, publishing a tag or
+release, and deploy. The list is not exhaustive. Everything else the
+harness automates is reversible and needs no opt-in: a closed issue
+reopens, `gh pr ready` can be undone, and comments can be edited. A version
+bump is not irreversible: it lives in a file inside the PR, and the human
+sees it in the same act as the merge.
+
+**The baseline is measured state.** `.loopwright/baseline.json` belongs to
+P3 and is not the policy file P7 names.
+
+**An artifact exists before production.** An issue and a PR exist before
+anything reaches production, because P1 requires the artifact. Without it
+there is nowhere for a diagnosis to live, and a fix deployed without a
+trail is green without evidence.
+
+**An empty enforcement pointer is a finding.** An entry whose
+`enforced by:` line is empty is not a completed entry; it names a gap to
+close.
+
 ## Detail territory
 
 ## Classification rule
