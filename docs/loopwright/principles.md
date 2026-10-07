@@ -172,4 +172,18 @@ depends on Claude, agents, skills or sessions.
 
 ## Classification rule
 
+If a change alters what counts as done, or how work flows, it is core. It
+must be argued against the opinions above.
+
+If a change alters how a fact is measured, or where a step runs, it belongs
+behind a contract, with a default implementation.
+
 ## Amendments
+
+Changing a core opinion is an explicit amendment: a dated entry naming the
+RFC that changed it.
+
+Ids are stable. Amendments never renumber. A withdrawn opinion stays in
+place, and keeps its id, in the form `P4 (withdrawn, RFC #N)`.
+
+There are no amendments yet.
