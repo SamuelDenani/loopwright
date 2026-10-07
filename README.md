@@ -146,7 +146,7 @@ the repo alone.
 Two rules hold the whole thing together: **"done" is the gate's verdict,
 never the judgement of whoever merges**, and **an irreversible action
 needs a human unless automating it has been explicitly opted into** —
-loopwright ships no such opt-in, so nothing in the harness merges. Both
+loopwright ships no such opt-in today, so nothing in the harness merges. Both
 are stated in full in `docs/loopwright/principles.md` (P2 and P8).
 
 ## Running it
