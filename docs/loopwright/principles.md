@@ -132,7 +132,7 @@ close.
 default, wired out of the box, the way framework starters ship `eslint`. A
 default is never a requirement: there is always a documented way to swap it.
 
-| id | Territory | Seam | Default today |
+| id | Territory | Seam | Default |
 |---|---|---|---|
 | T1 | Host language/ecosystem and the tools that measure it | `connector` | `js` |
 | T2 | Stack detection and toolchain installation | `toolchain provider` | `mise`, never required |
@@ -142,6 +142,10 @@ default is never a requirement: there is always a documented way to swap it.
 | T6 | Engine implementation language | — | Node |
 | T7 | Release tool | `release` | changesets, internal, host-first |
 | T8 | How work enters the pipeline | `intake` | hand-written RFC |
+
+A default is the recommended choice for that territory, wired out of the box
+where the territory is built. Where a territory has no implementation yet, the
+default names what it will be built with.
 
 This doc defines no contract for these territories. Each belongs to its own
 RFC. T5 is the one exception.
