@@ -128,6 +128,46 @@ close.
 
 ## Detail territory
 
+**Defaults are opinions too.** Every territory ships with one recommended
+default, wired out of the box, the way framework starters ship `eslint`. A
+default is never a requirement: there is always a documented way to swap it.
+
+Each territory below is a named seam and the default behind it today.
+
+| id | Territory | Seam | Default today |
+|---|---|---|---|
+| T1 | Host language/ecosystem and the tools that measure it | `connector` | `js` |
+| T2 | Stack detection and toolchain installation | `toolchain provider` | `mise`, never required |
+| T3 | Where and how agents execute | `runtime` | local session; container |
+| T4 | Thresholds and tolerances | — | already config-driven |
+| T5 | Agent host | `agent-host` | Claude Code |
+| T6 | Engine implementation language | — | Node |
+| T7 | Release tool | `release` | changesets, internal, host-first |
+| T8 | How work enters the pipeline | `intake` | hand-written RFC |
+
+This doc defines no contract for these territories. Each belongs to its own
+RFC. T5 is the one exception.
+
+T6 is independent of T1: CI written in a different language than the project
+is ordinary, so a Go host needing Node in CI is not coupling.
+
+**T5 is a contract of exactly four capabilities** the loop requires of its
+agent host:
+
+1. Dispatch a subagent with fresh context and an explicit payload.
+2. Restrict tools per role.
+3. Choose a model tier per task.
+4. An external reviewer that can write on the PR.
+
+Anything the loop needs beyond those four is leakage: it either enters the
+contract as a core change, or it is a bug.
+
+Capability 2 is load-bearing for P10. A reviewer is read-only by being handed
+no write tools, not by being told to behave.
+
+The engine has zero coupling here: nothing under `.loopwright/scripts/`
+references Claude, agents, skills or sessions.
+
 ## Classification rule
 
 ## Amendments
