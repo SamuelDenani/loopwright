@@ -1,15 +1,21 @@
 # loopwright
 
-Built from the loopwright project — this repo IS the product: the engine
-lives in `.loopwright/scripts/`, its tests in `.loopwright/tests/`
+This repo is loopwright itself, so nothing in it may make "done" a judgement
+call or buy a green build — it is held to the opinions it ships
+(`docs/loopwright/principles.md`). Its engine lives in
+`.loopwright/scripts/`, its tests in `.loopwright/tests/`
 (`cd .loopwright && npx vitest run` runs them).
 
 <!-- loopwright:start -->
 ## loopwright
 
-This repo has the loopwright layer vendored under `.loopwright/`: RFC-driven
-issues, an agentic execution loop, and a CI quality gate. See
-`docs/loopwright/quality-gate.md` for how the gate works, and
+In this repo, "done" is a mechanical verdict from configured checks, never
+the judgement of whoever merges: quality is a ratchet against a committed
+baseline, and a green build has to be earned rather than bought. Those
+opinions are enforced by the loopwright layer vendored under `.loopwright/`:
+RFC-driven issues, an agentic execution loop, and a CI quality gate. Read
+`docs/loopwright/principles.md` for the opinions in full and what each one
+refuses, `docs/loopwright/quality-gate.md` for how a verdict is reached, and
 `docs/loopwright/loop-harness.md` for how work flows from an RFC issue to a
 merged PR (the `/grill-rfc`, `/execute-issue`, and `/babysit-pr` skills).
 
