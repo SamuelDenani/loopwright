@@ -132,13 +132,11 @@ close.
 default, wired out of the box, the way framework starters ship `eslint`. A
 default is never a requirement: there is always a documented way to swap it.
 
-Each territory below is a named seam and the default behind it today.
-
 | id | Territory | Seam | Default today |
 |---|---|---|---|
 | T1 | Host language/ecosystem and the tools that measure it | `connector` | `js` |
 | T2 | Stack detection and toolchain installation | `toolchain provider` | `mise`, never required |
-| T3 | Where and how agents execute | `runtime` | local session; container |
+| T3 | Where and how agents execute | `runtime` | local session |
 | T4 | Thresholds and tolerances | — | already config-driven |
 | T5 | Agent host | `agent-host` | Claude Code |
 | T6 | Engine implementation language | — | Node |
@@ -166,7 +164,7 @@ Capability 2 is load-bearing for P10. A reviewer is read-only by being handed
 no write tools, not by being told to behave.
 
 The engine has zero coupling here: nothing under `.loopwright/scripts/`
-references Claude, agents, skills or sessions.
+depends on Claude, agents, skills or sessions.
 
 ## Classification rule
 
