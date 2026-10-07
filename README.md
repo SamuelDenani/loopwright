@@ -143,8 +143,11 @@ issue, a committed spec in `docs/specs/`, one commit per plan step, the PR
 conversation — so any session or human can pick up a half-finished task from
 the repo alone.
 
-Two rules hold the whole thing together: **the gate is the only source of truth
-for "done"**, and **merging is always the human's decision.**
+Two rules hold the whole thing together: **"done" is the gate's verdict,
+never the judgement of whoever merges**, and **an irreversible action
+needs a human unless automating it has been explicitly opted into** —
+loopwright ships no such opt-in, so nothing in the harness merges. Both
+are stated in full in `docs/loopwright/principles.md` (P2 and P8).
 
 ## Running it
 
@@ -163,6 +166,7 @@ authoritative verdict.
 
 | Piece | Where |
 |---|---|
+| Principles — what is fixed, what is swappable | `docs/loopwright/principles.md` |
 | Flow overview | `docs/loopwright/loop-harness.md` |
 | Gate design, metric by metric | `docs/loopwright/quality-gate.md` |
 | Gate engine + adapters | `.loopwright/scripts/` |
