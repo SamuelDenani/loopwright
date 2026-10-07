@@ -141,16 +141,16 @@ documented way to swap it. T4 and T6 have no seam and promise no swap route.
 |---|---|---|---|
 | T1 | Host language/ecosystem and the tools that measure it | `connector` | `js` |
 | T2 | Stack detection and toolchain installation | `toolchain provider` | `mise`, never required |
-| T3 | Where and how agents execute | `runtime` | `docker` container |
+| T3 | Where and how agents execute | `runtime` | local session |
 | T4 | Thresholds and tolerances | — | already config-driven |
 | T5 | Agent host | `agent-host` | Claude Code |
 | T6 | Engine implementation language | — | Node |
 | T7 | Release tool | `release` | changesets, internal, host-first |
 | T8 | How work enters the pipeline | `intake` | hand-written RFC |
 
-A default is the recommended choice for that territory, wired out of the box
-where the territory is built. Where a territory has no implementation yet, the
-default names what it will be built with.
+A default is the recommended choice for that territory. Where the territory is
+built, the default names what runs today. Where it has no implementation yet,
+the default names what it will be built with.
 
 This document defines no contract for these territories. Each belongs to its own
 RFC. T5 is the one exception.
