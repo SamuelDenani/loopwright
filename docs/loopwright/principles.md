@@ -115,9 +115,9 @@ bump is not irreversible: it lives in a file inside the PR, and the human
 sees it in the same act as the merge.
 
 **The baseline is measured state.** `.loopwright/baseline.json` belongs to
-P3. What separates it from the policy file is the author: the host writes the
-policy file, and the engine writes the baseline. The host commits the baseline
-and never edits it.
+P3. What separates it from the policy file is hand-editing: the policy file is
+meant to be edited by hand, and the baseline never is. The host commits the
+baseline and leaves its content to the engine.
 
 **An artifact exists before production.** An issue and a PR exist before
 anything reaches production, because P1 requires the artifact. Without it
@@ -125,17 +125,17 @@ there is nowhere for a diagnosis to live, and a fix deployed without a
 trail is green without evidence.
 
 **An empty enforcement pointer is a finding.** An entry whose
-`enforced by:` line is empty is complete as documentation. The empty line
-records that nothing enforces the opinion yet, so what is incomplete is the
-engine, not the entry. The gap is closed by building the enforcement, never
-by writing a pointer to a file that does not enforce the opinion.
+`enforced by:` line is empty names a gap. The gap is closed by building the
+enforcement, never by writing a pointer to a file that does not enforce the
+opinion.
 
 ## Detail territory
 
 **Defaults are opinions too.** Every territory ships with one recommended
 default, wired out of the box, the way framework starters ship `eslint`. A
-default is never a requirement: where a territory has a seam, there is a
-documented way to swap it. T4 and T6 have no seam and promise no swap route.
+default is never a requirement: there is always a documented way to swap it.
+The one exception is T6, the engine's implementation language, which has no
+swap route.
 
 | id | Territory | Seam | Default |
 |---|---|---|---|
@@ -152,8 +152,8 @@ A default is the recommended choice for that territory. Where the territory is
 built, the default names what runs today. Where it has no implementation yet,
 the default names what it will be built with.
 
-This document defines no contract for these territories. Each belongs to its own
-RFC. T5 is the one exception.
+This document defines no contract for these territories. Each belongs to
+its own RFC. T5 is the one exception.
 
 T6 is independent of T1: CI written in a different language than the project
 is ordinary, so a Go host needing Node in CI is not coupling.
@@ -169,9 +169,8 @@ agent host:
 Anything the loop needs beyond those four is leakage: it either enters the
 contract as a core change, or it is a bug.
 
-Capability 2 is load-bearing for P10. A reviewer is meant to be read-only by
-the tools it is handed, not by being told to behave. The guarantee is only as
-strong as that tool list, and a write-capable tool in it weakens the guarantee.
+Capability 2 is load-bearing for P10. A reviewer is read-only by being handed
+no write tools, not by being told to behave.
 
 The engine has zero coupling here: nothing under `.loopwright/scripts/`
 depends on Claude, agents, skills or sessions.
