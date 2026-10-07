@@ -8,7 +8,7 @@ a human is genuinely needed. The opinions in this document are the
 preconditions of that destination, not constraints on it. An agent that
 merges on its own is only acceptable if "done" is a mechanical verdict that
 cannot be bought. The gate as sole authority, the integrity signals and the
-ratchet are preconditions of autonomy, not constraints on it.
+ratchet are what make that verdict mechanical.
 
 This document is descriptive. No skill consults it, no gate checks it, and
 no RFC is required to carry a classification line. Its job is to name the
@@ -52,8 +52,8 @@ For how work flows from an issue to a merged change, see
   - `rejects:` regenerating `.loopwright/baseline.json` to make a regression
     disappear.
   - `enforced by:` `.loopwright/scripts/lib/evaluate.mjs`
-- **P4 — Integrity.** Green earned versus green bought, the integrity
-  signals, is a first-class concern, not an add-on.
+- **P4 — Integrity.** Green earned versus green bought — the integrity
+  signals — is a first-class concern, not an add-on.
   - `rejects:` a gate that scores correctness and coverage but leaves the
     integrity metrics out, so a suite made green with `.only` and empty
     catches still passes.
@@ -96,7 +96,7 @@ For how work flows from an issue to a merged change, see
 - **P12 — Vocabulary.** The metric vocabulary and its semantics are core and
   closed. Connectors measure and never invent a key: per metric, a connector
   reports a value for a core-owned key, or `unconfigured` (warns forever,
-  never blocks), or `failed` (always blocks).
+  never blocks on its own), or `failed` (always blocks).
   - `rejects:` a connector that reports a metric key core does not define.
   - `enforced by:` `.loopwright/scripts/lib/collect-metrics.mjs`
 
@@ -115,7 +115,9 @@ bump is not irreversible: it lives in a file inside the PR, and the human
 sees it in the same act as the merge.
 
 **The baseline is measured state.** `.loopwright/baseline.json` belongs to
-P3 and is not the policy file P7 names.
+P3. What separates it from the policy file is the author: the host writes the
+policy file, and the engine writes the baseline. The host commits the baseline
+and never edits it.
 
 **An artifact exists before production.** An issue and a PR exist before
 anything reaches production, because P1 requires the artifact. Without it
@@ -123,20 +125,23 @@ there is nowhere for a diagnosis to live, and a fix deployed without a
 trail is green without evidence.
 
 **An empty enforcement pointer is a finding.** An entry whose
-`enforced by:` line is empty is not a completed entry; it names a gap to
-close.
+`enforced by:` line is empty is complete as documentation. The empty line
+records that nothing enforces the opinion yet, so what is incomplete is the
+engine, not the entry. The gap is closed by building the enforcement, never
+by writing a pointer to a file that does not enforce the opinion.
 
 ## Detail territory
 
 **Defaults are opinions too.** Every territory ships with one recommended
 default, wired out of the box, the way framework starters ship `eslint`. A
-default is never a requirement: there is always a documented way to swap it.
+default is never a requirement: where a territory has a seam, there is a
+documented way to swap it. T4 and T6 have no seam and promise no swap route.
 
 | id | Territory | Seam | Default |
 |---|---|---|---|
 | T1 | Host language/ecosystem and the tools that measure it | `connector` | `js` |
 | T2 | Stack detection and toolchain installation | `toolchain provider` | `mise`, never required |
-| T3 | Where and how agents execute | `runtime` | local session |
+| T3 | Where and how agents execute | `runtime` | `docker` container |
 | T4 | Thresholds and tolerances | — | already config-driven |
 | T5 | Agent host | `agent-host` | Claude Code |
 | T6 | Engine implementation language | — | Node |
@@ -147,7 +152,7 @@ A default is the recommended choice for that territory, wired out of the box
 where the territory is built. Where a territory has no implementation yet, the
 default names what it will be built with.
 
-This doc defines no contract for these territories. Each belongs to its own
+This document defines no contract for these territories. Each belongs to its own
 RFC. T5 is the one exception.
 
 T6 is independent of T1: CI written in a different language than the project
@@ -164,8 +169,9 @@ agent host:
 Anything the loop needs beyond those four is leakage: it either enters the
 contract as a core change, or it is a bug.
 
-Capability 2 is load-bearing for P10. A reviewer is read-only by being handed
-no write tools, not by being told to behave.
+Capability 2 is load-bearing for P10. A reviewer is meant to be read-only by
+the tools it is handed, not by being told to behave. The guarantee is only as
+strong as that tool list, and a write-capable tool in it weakens the guarantee.
 
 The engine has zero coupling here: nothing under `.loopwright/scripts/`
 depends on Claude, agents, skills or sessions.
