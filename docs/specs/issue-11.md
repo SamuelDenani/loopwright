@@ -151,7 +151,7 @@ are file paths with **no line number**.
 | P7 | `.loopwright/scripts/lib/paths.mjs` | `CONFIG_PATH` is a single constant at `:11`, and `quality-gate.mjs:49` / `run-report.mjs:39` read only it |
 | P8 | `.claude/skills/babysit-pr/SKILL.md` | `:56` "**Merging is the user's decision — never merge.**" |
 | P9 | `.claude/agents/coder.md` | `:12` "## TDD loop (mandatory for plan steps)", `:15`, `:33` |
-| P10 | `.claude/agents/reviewer.md` | frontmatter `:4` `tools: Read, Grep, Glob, Bash` — no write tool |
+| P10 | `.claude/agents/reviewer.md` | frontmatter `:4` `tools: Read, Grep, Glob, Bash` — no Write/Edit, though Bash is write-capable; the three sibling reviewers carry `Read, Grep, Glob` only |
 | P11 | `.claude/agents/sub-issue-reviewer.md` | `:27-28` rejects a horizontal layer |
 | P12 | `.loopwright/scripts/lib/collect-metrics.mjs` | `COLLECTOR_METRICS` at `:76` is the closed id map |
 

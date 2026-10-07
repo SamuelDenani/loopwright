@@ -134,8 +134,8 @@ opinion.
 **Defaults are opinions too.** Every territory ships with one recommended
 default, wired out of the box, the way framework starters ship `eslint`. A
 default is never a requirement: there is always a documented way to swap it.
-The one exception is T6, the engine's implementation language, which has no
-swap route.
+The one exception to the swap rule is T6, the engine's implementation
+language, which has no swap route.
 
 | id | Territory | Seam | Default |
 |---|---|---|---|
@@ -145,7 +145,7 @@ swap route.
 | T4 | Thresholds and tolerances | — | already config-driven |
 | T5 | Agent host | `agent-host` | Claude Code |
 | T6 | Engine implementation language | — | Node |
-| T7 | Release tool | `release` | changesets, internal, host-first |
+| T7 | Release tool | `release` | `changesets`, internal, host-first |
 | T8 | How work enters the pipeline | `intake` | hand-written RFC |
 
 A default is the recommended choice for that territory. Where the territory is
