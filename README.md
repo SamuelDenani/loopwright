@@ -1,11 +1,11 @@
 # loopwright
 
-**"Done" is a mechanical verdict, not a judgement call.** loopwright scores
-every PR against a committed baseline, asks whether the green was earned or
-bought, and posts the verdict as a comment an agent can act on without a
-human translating it first. Vendor it into any JS/TS repo: it is opinionated
-about how work flows and how "done" is judged, and agnostic about the tools
-that measure it.
+**"Done" is a mechanical verdict, not a judgement call.** loopwright is a CI
+gate plus the loop that feeds it: it scores every PR against a committed
+baseline, asks whether the green was earned or bought, and posts the verdict
+as a comment an agent can act on without a human translating it first.
+Vendor it into any JS/TS repo: it is opinionated about how work flows and how
+"done" is judged, and agnostic about the tools that measure it.
 
 > *A wright is a maker — a shipwright builds ships, a playwright builds plays.
 > A loopwright builds loops.*
