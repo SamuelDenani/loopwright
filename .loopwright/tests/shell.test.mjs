@@ -23,10 +23,11 @@ describe('runShell', () => {
   });
 
   it('surfaces a spawn error in stderr instead of dropping it', () => {
-    // Output overflowing maxBuffer still exits 0, so the truncation is invisible
-    // in the status — the error is the only signal that stdout is incomplete.
+    // The error in stderr is the signal that stdout is incomplete. The exit
+    // status cannot carry that signal: whether an overflowing maxBuffer leaves
+    // the child at 0 or kills it varies by platform and under coverage
+    // instrumentation, so it is deliberately not asserted here.
     const result = runShell('echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', process.cwd(), { maxBuffer: 4 });
-    expect(result.status).toBe(0);
     expect(result.stderr).toMatch(/ENOBUFS|maxBuffer/i);
   });
 });
