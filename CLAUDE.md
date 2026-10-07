@@ -2,7 +2,7 @@
 
 This repo is loopwright itself, so nothing in it may make "done" a judgement
 call or buy a green build — it is held to the opinions it ships
-(`docs/loopwright/principles.md`). The engine that enforces them lives in
+(`docs/loopwright/principles.md`). Its engine lives in
 `.loopwright/scripts/`, its tests in `.loopwright/tests/`
 (`cd .loopwright && npx vitest run` runs them).
 
