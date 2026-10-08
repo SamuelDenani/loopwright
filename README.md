@@ -1,9 +1,11 @@
 # loopwright
 
-**A CI quality gate for repos where agents write the code — plus the loop that
-feeds it.** Vendor it into any JS/TS repo: every PR gets scored against a
-committed baseline, and the verdict comes back as a comment an agent can act on
-without a human translating it first.
+**"Done" is a mechanical verdict, not a judgement call.** loopwright is a CI
+gate plus the loop that feeds it: it scores every PR against a committed
+baseline, asks whether the green was earned or bought, and posts the verdict
+as a comment an agent can act on without a human translating it first.
+Vendor it into any JS/TS repo: it is opinionated about how work flows and how
+"done" is judged, and agnostic about the tools that measure it.
 
 > *A wright is a maker — a shipwright builds ships, a playwright builds plays.
 > A loopwright builds loops.*
@@ -86,9 +88,11 @@ stack stays yours: loopwright owns `.loopwright/` and nothing else.
 get the engine, its 148 tests and its docs as a starting point to modify. Point
 `sources.roots` in `.loopwright/config.json` at your code and re-baseline.
 
-## Your stack, not loopwright's
+## Your toolchain is a detail
 
-Each collector picks an adapter, and the installer detects which one you're on:
+loopwright fixes the metric vocabulary and the verdict, never which tool
+measures each metric — each collector picks an adapter, and the installer
+detects which one you're on:
 
 | Collector | Adapters |
 |---|---|
@@ -139,8 +143,11 @@ issue, a committed spec in `docs/specs/`, one commit per plan step, the PR
 conversation — so any session or human can pick up a half-finished task from
 the repo alone.
 
-Two rules hold the whole thing together: **the gate is the only source of truth
-for "done"**, and **merging is always the human's decision.**
+Two rules hold the whole thing together: **"done" is the gate's verdict,
+never the judgement of whoever merges**, and **an irreversible action
+needs a human unless automating it has been explicitly opted into** —
+loopwright ships no such opt-in today, so nothing in the harness merges. Both
+are stated in full in `docs/loopwright/principles.md` (P2 and P8).
 
 ## Running it
 
@@ -159,6 +166,7 @@ authoritative verdict.
 
 | Piece | Where |
 |---|---|
+| Principles — what is fixed, what is swappable | `docs/loopwright/principles.md` |
 | Flow overview | `docs/loopwright/loop-harness.md` |
 | Gate design, metric by metric | `docs/loopwright/quality-gate.md` |
 | Gate engine + adapters | `.loopwright/scripts/` |
@@ -170,7 +178,8 @@ authoritative verdict.
 
 ## Requirements
 
-- Node ≥ 20.11 and a `package.json` (loopwright targets JS/TS repos)
+- Node ≥ 20.11 and a `package.json` — the engine runs on Node, and
+  today's adapters measure a JS/TS repo
 - npm, pnpm or yarn — the engine and its CI workflow detect which from your lockfile
 - [`gh`](https://cli.github.com), authenticated
 - [Claude Code](https://claude.com/claude-code) locally, and the
